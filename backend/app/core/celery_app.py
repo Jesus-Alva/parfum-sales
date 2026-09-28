@@ -2,9 +2,9 @@ from celery import Celery
 from app.config import settings
 
 celery_app = Celery(
-    "perfume_tasks",
-    broker=settings.REDIS_URL,
-    backend=settings.REDIS_URL,
+    "scentia",
+    broker=settings.CELERY_BROKER_URL,
+    backend=settings.CELERY_RESULT_BACKEND,
     include=["app.tasks.notifications"],
 )
 
@@ -14,6 +14,4 @@ celery_app.conf.update(
     result_serializer="json",
     timezone="America/Mexico_City",
     enable_utc=True,
-    task_track_started=True,
-    broker_connection_retry_on_startup=True,
 )

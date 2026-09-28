@@ -1,52 +1,45 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.sale import Sale
+import random
+import string
+from datetime import datetime
+from sqlalchemy.orm import Session
+
 from app.models.perfume import Perfume
-from app.tasks.notifications import send_telegram_sale_notification
-import uuid
+from app.models.sale import Sale
+from app.models.address import Address
+from app.schemas.sale import SaleCreate
 
 
-async def create_sale(
-    db: AsyncSession,
-    perfume_id: int,
-    buyer_name: str,
-    phone: str,
-    address: str,
-    user_id: int,
-):
-    # Obtener perfume
-    perfume = await db.get(Perfume, perfume_id)
+def generate_folio() -> str:
+    ts = datetime.now().strftime("%Y%m%d%H%M%S")
+    rand = "".join(random.choices(string.ascii_uppercase + string.digits, k=4))
+    return f"SCN-{ts}-{rand}"
+
+
+def create_sale(db: Session, payload: SaleCreate) -> Sale:
+    perfume = db.query(Perfume).filter(Perfume.id == payload.perfume_id).first()
     if not perfume:
         raise ValueError("Perfume no encontrado")
-    if perfume.stock <= 0:
-        raise ValueError("Sin stock disponible")
+    if perfume.stock < payload.quantity:
+        raise ValueError("Stock insuficiente")
 
-    # Generar folio único
-    folio = f"PF-{uuid.uuid4().hex[:8].upper()}"
+    address = Address(**payload.address.model_dump())
+    db.add(address)
+    db.flush()
 
-    # Crear registro de venta
     sale = Sale(
-        folio=folio,
-        perfume_id=perfume_id,
-        buyer_name=buyer_name,
-        phone=phone,
-        address=address,
-        price=perfume.price,
-        user_id=user_id,
+        folio=generate_folio(),
+        perfume_id=perfume.id,
+        buyer_name=payload.buyer_name,
+        buyer_phone=payload.buyer_phone,
+        address_id=address.id,
+        quantity=payload.quantity,
+        unit_price=perfume.price,
+        total=perfume.price * payload.quantity,
+        status="registered",
     )
+
+    perfume.stock -= payload.quantity
     db.add(sale)
-    perfume.stock -= 1
-    await db.commit()
-    await db.refresh(sale)
-
-    # Disparar notificación asíncrona vía Celery
-    send_telegram_sale_notification.delay({
-        "folio": sale.folio,
-        "perfume_name": perfume.name,
-        "price": float(sale.price),
-        "buyer_name": sale.buyer_name,
-        "phone": sale.phone,
-        "address": sale.address,
-        "created_at": sale.created_at.strftime("%Y-%m-%d %H:%M"),
-    })
-
+    db.commit()
+    db.refresh(sale)
     return sale
