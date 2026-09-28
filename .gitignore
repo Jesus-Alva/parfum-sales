@@ -1,0 +1,70 @@
+# Environment files and credentials
+.env
+.env.*
+!.env.example
+!.env.*.example
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.*.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+.envvenv/
+pip-wheel-metadata/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Local databases and database exports
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.sql.gz
+
+# Frontend dependencies and generated output
+node_modules/
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+.vercel/
+
+# Runtime files, logs, and local uploads
+*.log
+logs/
+uploads/
+media/
+tmp/
+temp/
+
+# Secrets, certificates, and private keys
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cert
+
+# Local editor and operating-system files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
