@@ -24,6 +24,7 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins(self) -> List[str]:
+        """Convierte la cadena separada por comas en una lista limpia."""
         return [o.strip() for o in self.BACKEND_CORS_ORIGINS.split(",") if o.strip()]
 
 

@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Scentia DB",
+      "Group": "Scentia",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "scentia_db",
+      "Username": "scentia",
+      "SSLMode": "prefer",
+      "PassFile": "/pgpass"
+    }
+  }
+}

@@ -2,11 +2,16 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 from alembic import context
 
+# Importar settings y Base
 from app.config import settings
 from app.database import Base
-from app.models import user, perfume, sale, address  # noqa
+
+# 👇 CRÍTICO: importar TODOS los modelos para que Alembic los detecte
+from app.models import user, perfume, sale, address  # noqa: F401
 
 config = context.config
+
+# Sobrescribir la URL con la del .env
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 if config.config_file_name is not None:
@@ -16,24 +21,32 @@ target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
+    """Modo offline: genera SQL sin conectarse."""
     context.configure(
         url=settings.DATABASE_URL,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        compare_type=True,
     )
     with context.begin_transaction():
         context.run_migrations()
 
 
 def run_migrations_online() -> None:
+    """Modo online: se conecta y aplica migraciones."""
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=True,
+            compare_server_default=True,
+        )
         with context.begin_transaction():
             context.run_migrations()
 

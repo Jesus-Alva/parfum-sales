@@ -13,7 +13,33 @@ services:
       - "5432:5432"
     networks:
       - scentia_net
-
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: scentia_pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+      PGADMIN_CONFIG_UPGRADE_CHECK_ENABLED: "False"
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - ./pgadmin/pgpass:/pgpass:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - scentia_net
   redis:
     image: redis:7-alpine
     container_name: scentia_redis
@@ -24,6 +50,11 @@ services:
       - redis_data:/data
     networks:
       - scentia_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   backend:
     build:
@@ -33,12 +64,15 @@ services:
     restart: always
     env_file: .env
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - ./backend:/app
-    expose:
-      - "8000"
+      - /app/__pycache__
+    ports:
+      - "8000:8000"
     networks:
       - scentia_net
 
@@ -51,10 +85,13 @@ services:
     command: celery -A app.core.celery_app.celery_app worker --loglevel=info
     env_file: .env
     depends_on:
-      - redis
-      - backend
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
     volumes:
       - ./backend:/app
+      - /app/__pycache__
     networks:
       - scentia_net
 
@@ -75,11 +112,19 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      target: dev
     container_name: scentia_frontend
     restart: always
     env_file: .env
+    environment:
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
     ports:
       - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules        # 👈 CRÍTICO: preserva node_modules del contenedor
+      - /app/.next               # 👈 evita conflictos de caché de Next
     depends_on:
       - backend
     networks:
@@ -88,6 +133,7 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  pgadmin_data:
 
 networks:
   scentia_net:
