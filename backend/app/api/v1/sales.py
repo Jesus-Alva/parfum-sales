@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
+
 
 from app.database import get_db
 from app.api.deps import get_current_user
@@ -50,3 +52,36 @@ def get_sale(
     if not s:
         raise HTTPException(404, "Venta no encontrada")
     return s
+
+
+class SaleUpdateStatus(BaseModel):
+    status: str  # pending, registered, shipped, delivered, cancelled
+
+
+@router.patch("/{sale_id}/status", response_model=SaleOut)
+def update_sale_status(
+    sale_id: int,
+    payload: SaleUpdateStatus,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    s = db.query(Sale).filter(Sale.id == sale_id).first()
+    if not s:
+        raise HTTPException(404, "Venta no encontrada")
+    s.status = payload.status
+    db.commit()
+    db.refresh(s)
+    return s
+
+
+@router.delete("/{sale_id}", status_code=204)
+def delete_sale(
+    sale_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_admin),
+):
+    s = db.query(Sale).filter(Sale.id == sale_id).first()
+    if not s:
+        raise HTTPException(404, "Venta no encontrada")
+    db.delete(s)
+    db.commit()

@@ -1,8 +1,29 @@
 "use client";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Pencil, Trash2 } from "lucide-react";
+import { api, imageUrl } from "@/lib/api";
 
-export default function PerfumeCard({ perfume }: { perfume: any }) {
+export default function PerfumeCard({
+  perfume,
+  onDelete,
+}: {
+  perfume: any;
+  onDelete?: (id: number) => void;
+}) {
+  const router = useRouter();
+
+  const handleDelete = async () => {
+    if (!confirm(`¿Eliminar "${perfume.name}"?`)) return;
+    try {
+      await api.delete(`/perfumes/${perfume.id}`);
+      onDelete?.(perfume.id);
+      router.refresh();
+    } catch (e: any) {
+      alert(e?.response?.data?.detail || "No se pudo eliminar");
+    }
+  };
   return (
     <motion.div
       whileHover={{ y: -6 }}
@@ -10,7 +31,7 @@ export default function PerfumeCard({ perfume }: { perfume: any }) {
     >
       <div className="aspect-square rounded-xl mb-4 bg-gradient-to-br from-scentia-card to-scentia-bg flex items-center justify-center overflow-hidden">
         {perfume.image_url ? (
-          <img src={perfume.image_url} alt={perfume.name} className="w-full h-full object-cover" />
+          <img src={imageUrl(perfume.image_url)} alt={perfume.name} className="w-full h-full object-cover" />
         ) : (
           <span className="font-display text-5xl text-scentia-gold/40">S</span>
         )}

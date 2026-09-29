@@ -71,6 +71,7 @@ services:
     volumes:
       - ./backend:/app
       - /app/__pycache__
+      - ./backend/uploads:/app/uploads  
     ports:
       - "8000:8000"
     networks:
@@ -135,7 +136,6 @@ volumes:
   postgres_data:
   redis_data:
   pgadmin_data:
-  - ./backend/uploads:/app/uploads  
 
 networks:
   scentia_net:

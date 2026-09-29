@@ -14,6 +14,10 @@ export default function PerfumesPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const handleDelete = (id: number) => {
+    setPerfumes((prev) => prev.filter((p) => p.id !== id));
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -33,7 +37,7 @@ export default function PerfumesPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {perfumes.map((p) => (
-            <PerfumeCard key={p.id} perfume={p} />
+            <PerfumeCard key={p.id} perfume={p} onDelete={handleDelete} />
           ))}
         </div>
       )}

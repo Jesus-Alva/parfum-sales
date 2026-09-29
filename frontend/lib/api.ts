@@ -27,3 +27,21 @@ api.interceptors.response.use(
     return Promise.reject(err);
   }
 );
+
+export const uploadImage = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append("file", file);
+  const { data } = await api.post("/uploads/image", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data.url; // "/uploads/perfumes/xxxx.jpg"
+};
+
+// Helper para construir URL absoluta de imagen
+export const imageUrl = (path: string): string => {
+  if (!path) return "";
+  if (path.startsWith("http")) return path; // ya es absoluta
+  const base = (process.env.NEXT_PUBLIC_API_URL || "http://localhost/api/v1")
+    .replace(/\/api\/v1\/?$/, ""); // quitar /api/v1
+  return `${base}${path}`;
+};
