@@ -18,6 +18,14 @@ class Settings(BaseSettings):
 
     BACKEND_CORS_ORIGINS: str = "http://localhost:3000"
 
+# ── Uploads ────────────────────────────
+    UPLOAD_DIR: str = "/app/uploads"
+    MAX_UPLOAD_SIZE_MB: int = 5
+    ALLOWED_IMAGE_TYPES: str = "image/jpeg,image/png,image/webp,image/gif"
+
+    @property
+    def allowed_image_types(self) -> list[str]:
+        return [t.strip() for t in self.ALLOWED_IMAGE_TYPES.split(",") if t.strip()]
     class Config:
         env_file = ".env"
         extra = "ignore"

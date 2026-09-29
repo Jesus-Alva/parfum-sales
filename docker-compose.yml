@@ -91,6 +91,7 @@ services:
         condition: service_started
     volumes:
       - ./backend:/app
+      - ./backend/uploads:/app/uploads
       - /app/__pycache__
     networks:
       - scentia_net
@@ -134,6 +135,7 @@ volumes:
   postgres_data:
   redis_data:
   pgadmin_data:
+  - ./backend/uploads:/app/uploads  
 
 networks:
   scentia_net:
