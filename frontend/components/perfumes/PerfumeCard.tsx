@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Pencil, Trash2 } from "lucide-react";
-import { api, imageUrl } from "@/lib/api";
+import { api } from "@/lib/api";
 
 export default function PerfumeCard({
   perfume,
@@ -19,19 +19,36 @@ export default function PerfumeCard({
     try {
       await api.delete(`/perfumes/${perfume.id}`);
       onDelete?.(perfume.id);
-      router.refresh();
     } catch (e: any) {
       alert(e?.response?.data?.detail || "No se pudo eliminar");
     }
   };
+
   return (
     <motion.div
       whileHover={{ y: -6 }}
       className="glass rounded-2xl p-5 overflow-hidden group relative"
     >
+      <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition z-10">
+        <Link
+          href={`/perfumes/${perfume.id}/edit`}
+          className="bg-scentia-card/90 p-2 rounded-lg border border-scentia-border hover:border-scentia-gold"
+          title="Editar"
+        >
+          <Pencil size={14} className="text-scentia-gold" />
+        </Link>
+        <button
+          onClick={handleDelete}
+          className="bg-scentia-card/90 p-2 rounded-lg border border-scentia-border hover:border-red-500"
+          title="Eliminar"
+        >
+          <Trash2 size={14} className="text-red-400" />
+        </button>
+      </div>
+
       <div className="aspect-square rounded-xl mb-4 bg-gradient-to-br from-scentia-card to-scentia-bg flex items-center justify-center overflow-hidden">
         {perfume.image_url ? (
-          <img src={imageUrl(perfume.image_url)} alt={perfume.name} className="w-full h-full object-cover" />
+          <img src={perfume.image_url} alt={perfume.name} className="w-full h-full object-cover" />
         ) : (
           <span className="font-display text-5xl text-scentia-gold/40">S</span>
         )}
@@ -45,12 +62,6 @@ export default function PerfumeCard({
         <span className="text-lg font-semibold text-gradient-gold">
           ${perfume.price.toFixed(2)}
         </span>
-        <Link
-          href={`/sales?perfume=${perfume.id}`}
-          className="text-xs text-scentia-gold hover:underline"
-        >
-          Registrar venta
-        </Link>
       </div>
     </motion.div>
   );
