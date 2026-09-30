@@ -8,6 +8,7 @@ const empty = {
   name: "", brand: "", description: "", gender: "unisex",
   family: "", notes: "", volume_ml: 100, price: 0, cost: 0,
   stock: 0, image_url: "",
+  tipo: "", perfil: "", estilo: "", uso: "", presentacion: "",
 };
 
 export default function PerfumeForm({ perfume }: { perfume?: any }) {
@@ -124,6 +125,58 @@ export default function PerfumeForm({ perfume }: { perfume?: any }) {
         <div className="md:col-span-2">
           <label className="block text-sm mb-1">Notas</label>
           <input className={input} value={form.notes} onChange={(e) => update("notes", e.target.value)} />
+        </div>
+        <div className="md:col-span-2 mt-4">
+          <h3 className="font-display text-lg text-gradient-gold mb-3">
+            Características
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm mb-1">Tipo</label>
+              <input
+                className={input}
+                placeholder="Ej. Eau de Parfum"
+                value={form.tipo}
+                onChange={(e) => update("tipo", e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm mb-1">Estilo</label>
+              <input
+                className={input}
+                placeholder="Ej. Intenso, moderno y seductor"
+                value={form.estilo}
+                onChange={(e) => update("estilo", e.target.value)}
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm mb-1">Perfil aromático</label>
+              <input
+                className={input}
+                placeholder="Ej. Dulce, cálido, aromático y amaderado"
+                value={form.perfil}
+                onChange={(e) => update("perfil", e.target.value)}
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm mb-1">Uso recomendado</label>
+              <input
+                className={input}
+                placeholder="Ej. Citas, eventos y salidas nocturnas"
+                value={form.uso}
+                onChange={(e) => update("uso", e.target.value)}
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm mb-1">Presentación</label>
+              <input
+                className={input}
+                placeholder="Ej. Frasco icónico Valentino Born In Roma"
+                value={form.presentacion}
+                onChange={(e) => update("presentacion", e.target.value)}
+              />
+            </div>
+          </div>
         </div>
 
         {/* IMÁGENES MÚLTIPLES */}

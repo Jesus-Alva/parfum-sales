@@ -10,6 +10,7 @@ class PerfumeImageOut(BaseModel):
 
     class Config:
         from_attributes = True
+
 class PerfumeBase(BaseModel):
     name: str
     brand: str
@@ -22,7 +23,11 @@ class PerfumeBase(BaseModel):
     cost: float = 0
     stock: int = 0
     image_url: Optional[str] = ""
-    
+    tipo: Optional[str] = ""
+    perfil: Optional[str] = ""
+    estilo: Optional[str] = ""
+    uso: Optional[str] = ""
+    presentacion: Optional[str] = ""
 
 
 class PerfumeCreate(PerfumeBase):
@@ -41,8 +46,12 @@ class PerfumeUpdate(BaseModel):
     cost: Optional[float] = None
     stock: Optional[int] = None
     image_url: Optional[str] = None
-    images: Optional[List[str]] = None 
-
+    images: Optional[List[str]] = None
+    tipo: Optional[str] = None
+    perfil: Optional[str] = None
+    estilo: Optional[str] = None
+    uso: Optional[str] = None
+    presentacion: Optional[str] = None
 
 class PerfumeOut(PerfumeBase):
     id: int

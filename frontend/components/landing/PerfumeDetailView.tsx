@@ -26,8 +26,8 @@ export default function PerfumeDetailView({ perfume }: { perfume: any }) {
     perfume.images && perfume.images.length > 0
       ? perfume.images
       : perfume.image_url
-      ? [{ id: 0, url: perfume.image_url, position: 0 }]
-      : [];
+        ? [{ id: 0, url: perfume.image_url, position: 0 }]
+        : [];
 
   const handleBuy = () => {
     if (!getToken()) {
@@ -60,16 +60,14 @@ export default function PerfumeDetailView({ perfume }: { perfume: any }) {
             {/* Badge de disponibilidad */}
             <div className="mt-4 flex items-center gap-2">
               <span
-                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
-                  inStock
-                    ? "bg-green-500/10 text-green-400 border border-green-500/30"
-                    : "bg-red-500/10 text-red-400 border border-red-500/30"
-                }`}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${inStock
+                  ? "bg-green-500/10 text-green-400 border border-green-500/30"
+                  : "bg-red-500/10 text-red-400 border border-red-500/30"
+                  }`}
               >
                 <span
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    inStock ? "bg-green-400" : "bg-red-400"
-                  }`}
+                  className={`w-1.5 h-1.5 rounded-full ${inStock ? "bg-green-400" : "bg-red-400"
+                    }`}
                 />
                 {inStock ? `${perfume.stock} disponibles` : "Agotado"}
               </span>
@@ -104,8 +102,8 @@ export default function PerfumeDetailView({ perfume }: { perfume: any }) {
                 {perfume.gender === "masculine"
                   ? "Masculino"
                   : perfume.gender === "feminine"
-                  ? "Femenino"
-                  : "Unisex"}
+                    ? "Femenino"
+                    : "Unisex"}
               </span>
               {perfume.family && (
                 <span className="text-xs uppercase tracking-wider text-scentia-muted border border-scentia-border px-3 py-1 rounded-full">
@@ -143,6 +141,32 @@ export default function PerfumeDetailView({ perfume }: { perfume: any }) {
             </motion.div>
           )}
 
+          {/* ─── Características ─────────────────────── */}
+          {(perfume.tipo || perfume.estilo || perfume.perfil || perfume.uso || perfume.presentacion) && (
+            <motion.div variants={fadeUp}>
+              <h3 className="text-xs uppercase tracking-widest text-scentia-gold mb-3">
+                Características
+              </h3>
+              <div className="space-y-3">
+                {perfume.tipo && (
+                  <CharRow label="Tipo" value={perfume.tipo} />
+                )}
+                {perfume.perfil && (
+                  <CharRow label="Perfil aromático" value={perfume.perfil} />
+                )}
+                {perfume.estilo && (
+                  <CharRow label="Estilo" value={perfume.estilo} />
+                )}
+                {perfume.uso && (
+                  <CharRow label="Uso recomendado" value={perfume.uso} />
+                )}
+                {perfume.presentacion && (
+                  <CharRow label="Presentación" value={perfume.presentacion} />
+                )}
+              </div>
+            </motion.div>
+          )}
+
           {/* Notas olfativas */}
           {perfume.notes && (
             <motion.div variants={fadeUp}>
@@ -156,40 +180,38 @@ export default function PerfumeDetailView({ perfume }: { perfume: any }) {
             </motion.div>
           )}
 
-          {/* Especificaciones */}
-          <motion.div
-            variants={fadeUp}
-            className="glass rounded-2xl p-5 grid grid-cols-2 gap-4"
-          >
-            <Spec icon={<Tag size={14} />} label="Marca" value={perfume.brand} />
-            <Spec
-              icon={<UserIcon size={14} />}
-              label="Género"
-              value={
-                perfume.gender === "masculine"
-                  ? "Masculino"
-                  : perfume.gender === "feminine"
-                  ? "Femenino"
-                  : "Unisex"
-              }
-            />
-            <Spec
-              icon={<Droplets size={14} />}
-              label="Volumen"
-              value={`${perfume.volume_ml} ml`}
-            />
-            <Spec
-              icon={<Package size={14} />}
-              label="Stock"
-              value={perfume.stock}
-            />
-            {perfume.family && (
-              <Spec
-                icon={<Sparkles size={14} />}
-                label="Familia"
-                value={perfume.family}
-              />
-            )}
+          {/* ─── FICHA TÉCNICA ─────────────────────── */}
+          <motion.div variants={fadeUp}>
+            <h3 className="text-xs uppercase tracking-widest text-scentia-gold mb-3 flex items-center gap-2">
+              <Tag size={12} />
+              Ficha técnica
+            </h3>
+            <div className="glass rounded-2xl overflow-hidden">
+              <table className="w-full text-sm">
+                <tbody>
+                  <TechRow label="Producto" value={perfume.name} />
+                  <TechRow label="Marca" value={perfume.brand} />
+                  {perfume.tipo && <TechRow label="Tipo" value={perfume.tipo} />}
+                  <TechRow
+                    label="Género"
+                    value={
+                      perfume.gender === "masculine"
+                        ? "Masculino"
+                        : perfume.gender === "feminine"
+                          ? "Femenino"
+                          : "Unisex"
+                    }
+                  />
+                  {perfume.family && <TechRow label="Familia olfativa" value={perfume.family} />}
+                  {perfume.perfil && <TechRow label="Perfil aromático" value={perfume.perfil} />}
+                  {perfume.tipo && <TechRow label="Concentración" value={perfume.tipo} />}
+                  {perfume.uso && <TechRow label="Uso recomendado" value={perfume.uso} />}
+                  {perfume.estilo && <TechRow label="Estilo" value={perfume.estilo} />}
+                  {perfume.presentacion && <TechRow label="Presentación" value={perfume.presentacion} />}
+                  <TechRow label="Volumen" value={`${perfume.volume_ml} ml`} />
+                </tbody>
+              </table>
+            </div>
           </motion.div>
 
           {/* CTA comprar */}
@@ -264,5 +286,27 @@ function Spec({
         <p className="text-sm truncate">{value}</p>
       </div>
     </div>
+  );
+}
+
+function CharRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col sm:flex-row gap-1 sm:gap-4 py-2 border-b border-scentia-border/40 last:border-0">
+      <span className="text-xs uppercase tracking-widest text-scentia-muted sm:w-40 shrink-0">
+        {label}
+      </span>
+      <span className="text-sm text-scentia-text/90">{value}</span>
+    </div>
+  );
+}
+
+function TechRow({ label, value }: { label: string; value: string | number }) {
+  return (
+    <tr className="border-b border-scentia-border/40 last:border-0">
+      <td className="py-2.5 px-4 text-scentia-muted text-xs uppercase tracking-wider w-1/3">
+        {label}
+      </td>
+      <td className="py-2.5 px-4 text-scentia-text/90">{value}</td>
+    </tr>
   );
 }
