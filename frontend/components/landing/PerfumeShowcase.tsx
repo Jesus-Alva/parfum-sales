@@ -6,7 +6,7 @@ import { api, imageUrl } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import ScrollReveal from "@/components/shared/ScrollReveal";
 import CheckoutModal from "@/components/sales/CheckoutModal";
-import { ShoppingBag, Heart } from "lucide-react";
+import { ShoppingBag, Eye } from "lucide-react";
 
 export default function PerfumeShowcase() {
   const router = useRouter();
@@ -24,12 +24,17 @@ export default function PerfumeShowcase() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleBuy = (perfume: any) => {
+  const handleBuy = (e: React.MouseEvent, perfume: any) => {
+    e.stopPropagation();   // 👈 evita que también navegue al detalle
     if (!isAuthed) {
-      router.push(`/login?next=/`);
+      router.push(`/login?next=/perfumes/${perfume.id}`);
       return;
     }
     setSelected(perfume);
+  };
+
+  const goToDetail = (id: number) => {
+    router.push(`/perfumes/${id}`);
   };
 
   return (
@@ -45,10 +50,7 @@ export default function PerfumeShowcase() {
         </p>
         {!isAuthed && (
           <p className="text-center mb-16">
-            <a
-              href="/register"
-              className="text-scentia-gold underline hover:no-underline"
-            >
+            <a href="/register" className="text-scentia-gold underline hover:no-underline">
               Crear cuenta →
             </a>
           </p>
@@ -72,9 +74,18 @@ export default function PerfumeShowcase() {
               transition={{ delay: i * 0.08, duration: 0.6 }}
               whileHover={{ y: -8, rotateX: 3, rotateY: -3 }}
               style={{ transformStyle: "preserve-3d", perspective: 800 }}
-              className="glass rounded-2xl p-6 relative group overflow-hidden"
+              onClick={() => goToDetail(p.id)}   // 👈 toda la tarjeta navega
+              className="glass rounded-2xl p-6 relative group overflow-hidden cursor-pointer"
             >
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-500 bg-radial-gold" />
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-500 bg-radial-gold pointer-events-none" />
+
+              {/* Indicador "Ver detalle" al hover */}
+              <div className="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition">
+                <span className="flex items-center gap-1.5 bg-scentia-card/90 backdrop-blur text-xs px-2.5 py-1.5 rounded-full border border-scentia-border">
+                  <Eye size={12} className="text-scentia-gold" />
+                  Ver
+                </span>
+              </div>
 
               <div className="relative">
                 <div className="aspect-square rounded-xl mb-5 overflow-hidden bg-gradient-to-br from-scentia-card to-scentia-bg flex items-center justify-center">
@@ -86,6 +97,13 @@ export default function PerfumeShowcase() {
                     />
                   ) : (
                     <span className="font-display text-6xl text-scentia-gold/40">S</span>
+                  )}
+
+                  {/* Badge de múltiples imágenes */}
+                  {p.images?.length > 1 && (
+                    <span className="absolute bottom-2 right-2 bg-black/60 backdrop-blur text-white text-xs px-2 py-1 rounded-full z-10">
+                      {p.images.length} 📷
+                    </span>
                   )}
                 </div>
 
@@ -107,8 +125,8 @@ export default function PerfumeShowcase() {
                     </p>
                   </div>
                   <button
-                    onClick={() => handleBuy(p)}
-                    className="bg-gradient-to-r from-scentia-gold to-scentia-gold-soft text-black font-semibold px-4 py-2 rounded-lg hover:opacity-90 transition flex items-center gap-2"
+                    onClick={(e) => handleBuy(e, p)}   // 👈 e.stopPropagation dentro
+                    className="bg-gradient-to-r from-scentia-gold to-scentia-gold-soft text-black font-semibold px-4 py-2 rounded-lg hover:opacity-90 transition flex items-center gap-2 relative z-20"
                   >
                     <ShoppingBag size={16} />
                     {isAuthed ? "Comprar" : "Regístrate"}
