@@ -34,14 +34,26 @@ export const uploadImage = async (file: File): Promise<string> => {
   const { data } = await api.post("/uploads/image", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
-  return data.url; // "/uploads/perfumes/xxxx.jpg"
+  return data.url;
 };
 
-// Helper para construir URL absoluta de imagen
+export const uploadImages = async (files: File[]): Promise<string[]> => {
+  if (files.length === 0) return [];
+  if (files.length === 1) return [await uploadImage(files[0])];
+
+  const formData = new FormData();
+  files.forEach((f) => formData.append("files", f));
+
+  const { data } = await api.post("/uploads/images", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data.files.map((f: any) => f.url);
+};
+
 export const imageUrl = (path: string): string => {
   if (!path) return "";
-  if (path.startsWith("http")) return path; // ya es absoluta
+  if (path.startsWith("http")) return path;
   const base = (process.env.NEXT_PUBLIC_API_URL || "http://localhost/api/v1")
-    .replace(/\/api\/v1\/?$/, ""); // quitar /api/v1
+    .replace(/\/api\/v1\/?$/, "");
   return `${base}${path}`;
 };

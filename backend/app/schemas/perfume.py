@@ -1,8 +1,15 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 
+class PerfumeImageOut(BaseModel):
+    id: int
+    url: str
+    position: int
+
+    class Config:
+        from_attributes = True
 class PerfumeBase(BaseModel):
     name: str
     brand: str
@@ -15,10 +22,11 @@ class PerfumeBase(BaseModel):
     cost: float = 0
     stock: int = 0
     image_url: Optional[str] = ""
+    
 
 
 class PerfumeCreate(PerfumeBase):
-    pass
+    images: Optional[List[str]] = []
 
 
 class PerfumeUpdate(BaseModel):
@@ -33,11 +41,13 @@ class PerfumeUpdate(BaseModel):
     cost: Optional[float] = None
     stock: Optional[int] = None
     image_url: Optional[str] = None
+    images: Optional[List[str]] = None 
 
 
 class PerfumeOut(PerfumeBase):
     id: int
     created_at: datetime
+    images: List[PerfumeImageOut] = [] 
 
     class Config:
         from_attributes = True

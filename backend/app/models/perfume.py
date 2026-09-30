@@ -1,5 +1,5 @@
 from sqlalchemy import String, Float, Integer, Text, DateTime, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
 
 from app.database import Base
@@ -21,3 +21,11 @@ class Perfume(Base):
     stock: Mapped[int] = mapped_column(Integer, default=0)
     image_url: Mapped[str] = mapped_column(String(500), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    images = relationship(
+        "PerfumeImage",
+        back_populates="perfume",
+        cascade="all, delete-orphan",
+        order_by="PerfumeImage.position",
+        lazy="selectin",   # carga eager para evitar N+1
+    )
