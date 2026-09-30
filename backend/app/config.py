@@ -25,7 +25,8 @@ class Settings(BaseSettings):
 
     @property
     def allowed_image_types(self) -> list[str]:
-        return [t.strip() for t in self.ALLOWED_IMAGE_TYPES.split(",") if t.strip()]
+        return [t.strip() for t in self.ALLOWED_IMAGE_TYPES.split(",") 
+                if t.strip()]
     class Config:
         env_file = ".env"
         extra = "ignore"
@@ -33,7 +34,8 @@ class Settings(BaseSettings):
     @property
     def cors_origins(self) -> List[str]:
         """Convierte la cadena separada por comas en una lista limpia."""
-        return [o.strip() for o in self.BACKEND_CORS_ORIGINS.split(",") if o.strip()]
+        return [o.strip() for o in self.BACKEND_CORS_ORIGINS.split(",") 
+                if o.strip()]
 
 
 settings = Settings()

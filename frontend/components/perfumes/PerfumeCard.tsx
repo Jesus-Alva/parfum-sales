@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Pencil, Trash2 } from "lucide-react";
-import { api } from "@/lib/api";
+import { api, imageUrl } from "@/lib/api";
 
 export default function PerfumeCard({
   perfume,
@@ -48,9 +48,8 @@ export default function PerfumeCard({
 
       <div className="aspect-square rounded-xl mb-4 bg-gradient-to-br from-scentia-card to-scentia-bg flex items-center justify-center overflow-hidden">
         {perfume.image_url ? (
-          <img src={perfume.image_url} alt={perfume.name} className="w-full h-full object-cover" />
-        ) : (
-          <span className="font-display text-5xl text-scentia-gold/40">S</span>
+          <img src={imageUrl(perfume.image_url)} alt={perfume.name} />        ) : (
+        <span className="font-display text-5xl text-scentia-gold/40">S</span>
         )}
       </div>
       <p className="text-xs uppercase tracking-widest text-scentia-gold">{perfume.brand}</p>
