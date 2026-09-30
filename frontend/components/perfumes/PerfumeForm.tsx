@@ -1,8 +1,8 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { api, uploadImage, imageUrl } from "@/lib/api";
-import { Upload, X } from "lucide-react";
+import { api, uploadImages } from "@/lib/api";
+import MultiImageUpload from "./MultiImageUpload";
 
 const empty = {
   name: "", brand: "", description: "", gender: "unisex",
@@ -15,47 +15,27 @@ export default function PerfumeForm({ perfume }: { perfume?: any }) {
   const isEdit = !!perfume;
 
   const [form, setForm] = useState<any>(perfume || empty);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [newFiles, setNewFiles] = useState<File[]>([]);
+  const [existingImages, setExistingImages] = useState<{ id: number; url: string }[]>(
+    Array.isArray(perfume?.images) ? perfume.images : []
+  );
+  const [coverUrl, setCoverUrl] = useState<string>(perfume?.image_url || "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const update = (k: string, v: any) => setForm({ ...form, [k]: v });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setError("Solo se permiten imágenes");
-      return;
+  const handleRemoveExisting = async (imageId: number) => {
+    if (!isEdit) return;
+    if (!confirm("¿Eliminar esta imagen?")) return;
+    try {
+      await api.delete(`/perfumes/${perfume.id}/images/${imageId}`);
+      const removed = existingImages.find((i) => i.id === imageId);
+      setExistingImages((prev) => prev.filter((i) => i.id !== imageId));
+      if (removed && coverUrl === removed.url) setCoverUrl("");
+    } catch (e: any) {
+      alert(e?.response?.data?.detail || "Error al eliminar imagen");
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setError("La imagen no debe superar 5MB");
-      return;
-    }
-    setError("");
-    setImageFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setError("Solo se permiten imágenes");
-      return;
-    }
-    setImageFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
-  };
-
-  const clearImage = () => {
-    setImageFile(null);
-    setPreviewUrl("");
-    setForm({ ...form, image_url: "" });
-    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -63,16 +43,21 @@ export default function PerfumeForm({ perfume }: { perfume?: any }) {
     setSaving(true);
     setError("");
     try {
-      let finalImageUrl = form.image_url;
+      // 1. Subir nuevas imágenes
+      const uploadedUrls = newFiles.length > 0 ? await uploadImages(newFiles) : [];
 
-      // Subir imagen primero
-      if (imageFile) {
-        finalImageUrl = await uploadImage(imageFile);
-      }
+      // 2. Lista final de URLs (existentes + nuevas)
+      const existingUrls = existingImages.map((i) => i.url);
+      const allUrls = [...existingUrls, ...uploadedUrls];
+
+      // 3. Cover
+      let finalCover = coverUrl;
+      if (!finalCover && allUrls.length > 0) finalCover = allUrls[0];
 
       const payload = {
         ...form,
-        image_url: finalImageUrl,
+        image_url: finalCover,
+        images: allUrls,
         volume_ml: Number(form.volume_ml),
         price: Number(form.price),
         cost: Number(form.cost),
@@ -141,64 +126,15 @@ export default function PerfumeForm({ perfume }: { perfume?: any }) {
           <input className={input} value={form.notes} onChange={(e) => update("notes", e.target.value)} />
         </div>
 
-        {/* ─── IMAGEN ──────────────────────────────── */}
+        {/* IMÁGENES MÚLTIPLES */}
         <div className="md:col-span-2">
-          <label className="block text-sm mb-2">Imagen del perfume</label>
-
-          <div
-            onDrop={handleDrop}
-            onDragOver={(e) => e.preventDefault()}
-            onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-scentia-border hover:border-scentia-gold rounded-xl p-6 cursor-pointer transition text-center bg-scentia-card/40"
-          >
-            {previewUrl ? (
-              // Preview de archivo nuevo
-              <div className="relative inline-block">
-                <img src={previewUrl} alt="Preview" className="max-h-48 rounded-lg mx-auto" />
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    clearImage();
-                  }}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                >
-                  <X size={14} />
-                </button>
-                <p className="text-xs text-scentia-muted mt-2">Nueva imagen · se subirá al guardar</p>
-              </div>
-            ) : form.image_url ? (
-              // Imagen ya guardada (modo edición)
-              <div className="relative inline-block">
-                <img src={imageUrl(form.image_url)} alt="Actual" className="max-h-48 rounded-lg mx-auto" />
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    clearImage();
-                  }}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                >
-                  <X size={14} />
-                </button>
-                <p className="text-xs text-scentia-muted mt-2">Imagen actual · clic para reemplazar</p>
-              </div>
-            ) : (
-              // Placeholder
-              <div className="text-scentia-muted py-4">
-                <Upload className="mx-auto mb-2" size={32} />
-                <p className="text-sm">Arrastra una imagen o haz clic para seleccionar</p>
-                <p className="text-xs mt-1">JPG, PNG, WEBP · Máx 5MB</p>
-              </div>
-            )}
-          </div>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
-            onChange={handleFileChange}
-            className="hidden"
+          <MultiImageUpload
+            existing={existingImages}
+            newFiles={newFiles}
+            onChange={setNewFiles}
+            onRemoveExisting={handleRemoveExisting}
+            onSetCover={setCoverUrl}
+            coverUrl={coverUrl}
           />
         </div>
 

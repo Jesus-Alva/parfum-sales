@@ -21,7 +21,7 @@ class Settings(BaseSettings):
 # ── Uploads ────────────────────────────
     UPLOAD_DIR: str = "/app/uploads"
     MAX_UPLOAD_SIZE_MB: int = 5
-    ALLOWED_IMAGE_TYPES: str = "image/jpeg,image/png,image/webp,image/gif"
+    ALLOWED_IMAGE_TYPES: str = "image/jpeg,image/png,image/webp,image/gif, image/avif"
 
     @property
     def allowed_image_types(self) -> list[str]:

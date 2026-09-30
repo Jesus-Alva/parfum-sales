@@ -15,6 +15,7 @@ ALLOWED_EXT = {
     "image/png": ".png",
     "image/webp": ".webp",
     "image/gif": ".gif",
+    "image/avif": ".avif",
 }
 
 
