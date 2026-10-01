@@ -6,6 +6,8 @@ const ADMIN_PATTERNS = [
   /^\/dashboard(\/|$)/,
   /^\/analytics(\/|$)/,
   /^\/sales(\/|$)/,
+  /^\/orders(\/|$)/,
+  /^\/delivery-locations(\/|$)/,
   /^\/perfumes\/?$/,              // solo la lista del panel
   /^\/perfumes\/new(\/|$)/,
   /^\/perfumes\/\d+\/edit(\/|$)/,

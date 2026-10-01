@@ -17,8 +17,18 @@ class Sale(Base):
     quantity: Mapped[int] = mapped_column(Integer, default=1)
     unit_price: Mapped[float] = mapped_column(Float, nullable=False)
     total: Mapped[float] = mapped_column(Float, nullable=False)
-    status: Mapped[str] = mapped_column(String(30), default="pending")
+    status: Mapped[str] = mapped_column(String(30), default="pending_delivery")
+    delivery_type: Mapped[str] = mapped_column(String(20), default="shipping", nullable=False)
+    preferred_delivery_location_id: Mapped[int | None] = mapped_column(
+        ForeignKey("delivery_locations.id", ondelete="SET NULL"), nullable=True
+    )
+    delivery_location_id: Mapped[int | None] = mapped_column(
+        ForeignKey("delivery_locations.id", ondelete="SET NULL"), nullable=True
+    )
+    delivery_scheduled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     perfume = relationship("Perfume")
     address = relationship("Address")
+    preferred_delivery_location = relationship("DeliveryLocation", foreign_keys=[preferred_delivery_location_id])
+    delivery_location = relationship("DeliveryLocation", foreign_keys=[delivery_location_id])

@@ -13,8 +13,9 @@ router = APIRouter()
 
 @router.get("/stats")
 def stats(db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
-    total_sales = db.query(func.count(Sale.id)).scalar() or 0
-    total_revenue = db.query(func.coalesce(func.sum(Sale.total), 0)).scalar() or 0
+    completed_sales = Sale.status == "delivered"
+    total_sales = db.query(func.count(Sale.id)).filter(completed_sales).scalar() or 0
+    total_revenue = db.query(func.coalesce(func.sum(Sale.total), 0)).filter(completed_sales).scalar() or 0
     total_perfumes = db.query(func.count(Perfume.id)).scalar() or 0
     low_stock = db.query(func.count(Perfume.id)).filter(Perfume.stock <= 3).scalar() or 0
 
@@ -25,6 +26,7 @@ def stats(db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
             func.sum(Sale.total).label("total"),
             func.count(Sale.id).label("count"),
         )
+        .filter(completed_sales)
         .group_by(func.date(Sale.created_at))
         .order_by(func.date(Sale.created_at))
         .all()

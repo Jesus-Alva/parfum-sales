@@ -37,6 +37,12 @@ docker compose exec backend alembic upgrade head
    `https://api.telegram.org/bot<TOKEN>/getUpdates`
 4. Copia el chat_id a `TELEGRAM_CHAT_ID`
 
+## 📍 Entregas y pedidos
+
+Configura `BUSINESS_CITY` y `BUSINESS_STATE` en el archivo `.env` con el municipio y estado de la sede. Las compras con esos datos se mostrarán como entrega local y ofrecerán los puntos activos registrados por el administrador; las demás se registrarán para envío por paquetería.
+
+El panel **Pedidos** permite buscar por folio, confirmar el punto y horario acordados, y marcar el pedido como entregado. Al finalizarlo aparecerá en **Ventas** y en las métricas de ventas completadas. Administra los puntos desde **Ubicaciones**. Los mapas usan Leaflet con mosaicos de OpenStreetMap; Photon geocodifica las direcciones escritas y el pin se puede corregir manualmente.
+
 ## 📦 Módulos
 
 - **Auth**: registro / login con JWT

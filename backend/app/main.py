@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
-from app.api.v1 import auth, users, perfumes, sales, dashboard, uploads
+from app.api.v1 import auth, users, perfumes, sales, dashboard, uploads, delivery_locations
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -32,6 +32,7 @@ app.include_router(sales.router, prefix="/api/v1/sales", tags=["Sales"])
 app.include_router(dashboard.router, 
                    prefix="/api/v1/dashboard", tags=["Dashboard"])
 app.include_router(uploads.router, prefix="/api/v1/uploads", tags=["Uploads"])
+app.include_router(delivery_locations.router, prefix="/api/v1/delivery-locations", tags=["Delivery locations"])
 
 
 @app.get("/api/v1/health")

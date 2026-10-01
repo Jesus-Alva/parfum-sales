@@ -1,4 +1,5 @@
 "use client";
+import LocationMap from "@/components/shared/LocationMap";
 
 export default function SaleDetail({ sale }: { sale: any }) {
   return (
@@ -20,6 +21,18 @@ export default function SaleDetail({ sale }: { sale: any }) {
         {sale.address.street} {sale.address.number}, {sale.address.city},{" "}
         {sale.address.state} {sale.address.postal_code}, {sale.address.country}
       </p>
+      <div className="mt-5">
+        <h3 className="font-display text-lg mb-2">{sale.delivery_type === "local" ? "Punto de entrega confirmado" : "Ubicación de envío"}</h3>
+        {sale.delivery_type === "local" && sale.delivery_location ? (
+          <>
+            <p className="mb-3 text-sm text-scentia-muted">{sale.delivery_location.name} · {sale.delivery_location.address}, {sale.delivery_location.city}</p>
+            {sale.delivery_scheduled_at && <p className="mb-3 text-sm">{new Date(sale.delivery_scheduled_at).toLocaleString()}</p>}
+            <LocationMap latitude={sale.delivery_location.latitude} longitude={sale.delivery_location.longitude} label={sale.delivery_location.name} />
+          </>
+        ) : (
+          <LocationMap latitude={sale.address.latitude} longitude={sale.address.longitude} label="Domicilio de envío" />
+        )}
+      </div>
     </div>
   );
 }

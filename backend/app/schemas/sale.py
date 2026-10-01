@@ -1,5 +1,17 @@
 from pydantic import BaseModel
 from datetime import datetime
+from typing import Optional
+from app.schemas.delivery_location import DeliveryLocationOut
+
+
+class PerfumeSummary(BaseModel):
+    id: int
+    name: str
+    brand: str
+    image_url: str
+
+    class Config:
+        from_attributes = True
 
 
 class AddressCreate(BaseModel):
@@ -10,6 +22,8 @@ class AddressCreate(BaseModel):
     postal_code: str = ""
     country: str = "México"
     references: str = ""
+    latitude: float | None = None
+    longitude: float | None = None
 
 
 class AddressOut(AddressCreate):
@@ -25,6 +39,7 @@ class SaleCreate(BaseModel):
     buyer_phone: str
     quantity: int = 1
     address: AddressCreate
+    preferred_delivery_location_id: Optional[int] = None
 
 
 class SaleOut(BaseModel):
@@ -39,6 +54,11 @@ class SaleOut(BaseModel):
     status: str
     created_at: datetime
     address: AddressOut
+    perfume: PerfumeSummary
+    delivery_type: str
+    preferred_delivery_location: Optional[DeliveryLocationOut] = None
+    delivery_location: Optional[DeliveryLocationOut] = None
+    delivery_scheduled_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

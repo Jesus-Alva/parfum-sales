@@ -15,6 +15,8 @@ class Settings(BaseSettings):
 
     TELEGRAM_BOT_TOKEN: str = ""
     TELEGRAM_CHAT_ID: str = ""
+    BUSINESS_CITY: str = ""
+    BUSINESS_STATE: str = ""
 
     BACKEND_CORS_ORIGINS: str = "http://localhost:3000"
 
