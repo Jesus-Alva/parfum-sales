@@ -1,18 +1,28 @@
 "use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, SprayCan, ShoppingBag, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isAdmin as isAdminFn } from "@/lib/auth";
 
-const items = [
-  { href: "/dashboard", label: "Panel", icon: LayoutDashboard },
-  { href: "/perfumes", label: "Perfumes", icon: SprayCan },
-  { href: "/sales", label: "Ventas", icon: ShoppingBag },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
+const ALL_ITEMS = [
+  { href: "/dashboard", label: "Panel", icon: LayoutDashboard, adminOnly: false },
+  { href: "/perfumes", label: "Perfumes", icon: SprayCan, adminOnly: true },
+  { href: "/sales", label: "Ventas", icon: ShoppingBag, adminOnly: true },
+  { href: "/analytics", label: "Analytics", icon: BarChart3, adminOnly: true },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [admin, setAdmin] = useState(false);
+
+  useEffect(() => {
+    setAdmin(isAdminFn());
+  }, []);
+
+  const items = ALL_ITEMS.filter((i) => !i.adminOnly || admin);
+
   return (
     <aside className="hidden md:flex flex-col w-64 bg-scentia-card border-r border-scentia-border min-h-screen p-6">
       <Link href="/" className="font-display text-3xl text-gradient-gold mb-10">

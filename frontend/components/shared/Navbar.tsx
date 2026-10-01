@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ShoppingBag, User, LogOut, LayoutDashboard } from "lucide-react";
-import { getToken, clearToken } from "@/lib/auth";
+import { getToken, clearToken, isAdmin } from "@/lib/auth";
 import { useCartStore } from "@/store/cartStore";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +20,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isAuthed, setIsAuthed] = useState(false);
+  const [isAdminState, setIsAdminState] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -30,7 +31,7 @@ export default function Navbar() {
   // Detectar auth y scroll
   useEffect(() => {
     setIsAuthed(!!getToken());
-
+    setIsAdminState(isAdmin());
     const handleScroll = () => setScrolled(window.scrollY > 30);
     handleScroll();
     window.addEventListener("scroll", handleScroll);
@@ -115,13 +116,15 @@ export default function Navbar() {
 
             {isAuthed ? (
               <>
-                <Link
-                  href="/dashboard"
-                  className="flex items-center gap-2 px-4 py-2 rounded-full border border-scentia-gold/40 text-scentia-gold text-sm hover:bg-scentia-gold/10 transition"
-                >
-                  <LayoutDashboard size={14} />
-                  Panel
-                </Link>
+                {isAdminState && (
+                    <Link
+                    href="/dashboard"
+                    className="flex items-center gap-2 px-4 py-2 rounded-full border border-scentia-gold/40 text-scentia-gold text-sm hover:bg-scentia-gold/10 transition"
+                  >
+                    <LayoutDashboard size={14} />
+                    Panel
+                  </Link>
+                )}
                 <button
                   onClick={handleLogout}
                   className="p-2 rounded-full hover:bg-red-500/10 text-scentia-muted hover:text-red-400 transition"

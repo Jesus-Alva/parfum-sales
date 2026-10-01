@@ -26,9 +26,18 @@ function LoginForm() {
     setError("");
     try {
       const { data } = await api.post("/auth/login", { email, password });
-      saveToken(data.access_token);
-      router.push(next);   // 👈 Redirige a ?next= o /dashboard
-      router.refresh();    // 👈 Refresca para que el middleware re-evalúe
+      saveToken(data.access_token, data.is_admin);
+      // router.push(next);   // 👈 Redirige a ?next= o /dashboard
+      // router.refresh();    // 👈 Refresca para que el middleware re-evalúe
+      const redirectTo = data.is_admin
+      ? next && next.startsWith("/dashboard")
+        ? next
+        : next && !["/login", "/register", "/"].includes(next)
+        ? next
+        : "/dashboard"
+      : "/";
+
+      router.push(redirectTo);
     } catch (err: any) {
       setError(err?.response?.data?.detail || "Error de login");
     } finally {

@@ -1,38 +1,48 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Rutas protegidas con regex (más preciso que prefijo)
-const PROTECTED_PATTERNS = [
+// Rutas que SOLO admins pueden ver
+const ADMIN_PATTERNS = [
   /^\/dashboard(\/|$)/,
   /^\/analytics(\/|$)/,
-  /^\/perfumes\/?$/,            // solo "/perfumes" y "/perfumes/"
-  /^\/perfumes\/new(\/|$)/,     // "/perfumes/new"
-  /^\/perfumes\/\d+\/edit(\/|$)/, // "/perfumes/123/edit"
   /^\/sales(\/|$)/,
+  /^\/perfumes\/?$/,              // solo la lista del panel
+  /^\/perfumes\/new(\/|$)/,
+  /^\/perfumes\/\d+\/edit(\/|$)/,
 ];
 
-// Rutas que NO deben verse si ya estás logueado
+// Rutas públicas que NO deben verse si ya estás logueado
 const AUTH_ROUTES = ["/login", "/register"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const token = request.cookies.get("scentia_token")?.value;
 
-  const isProtected = PROTECTED_PATTERNS.some((rx) => rx.test(pathname));
+  const token = request.cookies.get("scentia_token")?.value;
+  const isAdminCookie = request.cookies.get("scentia_is_admin")?.value === "1";
+
+  const isAdminRoute = ADMIN_PATTERNS.some((rx) => rx.test(pathname));
   const isAuthRoute = AUTH_ROUTES.some((r) => pathname.startsWith(r));
 
-  // Sin token en ruta protegida → login
-  if (isProtected && !token) {
+  // 1. Ruta de admin SIN login → al login con next
+  if (isAdminRoute && !token) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
   }
 
-  // Con token en login/register → dashboard
+  // 2. Ruta de admin CON login pero SIN rol admin → al landing
+  if (isAdminRoute && token && !isAdminCookie) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/";
+    url.searchParams.set("forbidden", "1");   // aviso opcional
+    return NextResponse.redirect(url);
+  }
+
+  // 3. Login/registro estando logueado → redirige según rol
   if (isAuthRoute && token) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = isAdminCookie ? "/dashboard" : "/";
     return NextResponse.redirect(url);
   }
 
