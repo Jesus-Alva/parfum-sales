@@ -120,7 +120,7 @@ def get_perfume(perfume_id: int, db: Session = Depends(get_db)):
 def create_perfume(
     payload: PerfumeCreate,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(get_current_admin),
 ):
     data = payload.model_dump(exclude={"images"})
     perfume = Perfume(**data)
@@ -145,7 +145,7 @@ def update_perfume(
     perfume_id: int,
     payload: PerfumeUpdate,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(get_current_admin),
 ):
     p = db.query(Perfume).filter(Perfume.id == perfume_id).first()
     if not p:
@@ -185,7 +185,7 @@ def delete_image(
     perfume_id: int,
     image_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(get_current_admin),
 ):
     img = (
         db.query(PerfumeImage)

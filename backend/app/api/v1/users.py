@@ -16,7 +16,7 @@ def me(current: User = Depends(get_current_user)):
 
 
 @router.get("/", response_model=list[UserOut])
-def list_users(db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+def list_users(db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
     return db.query(User).all()
 
 class UserUpdate(BaseModel):

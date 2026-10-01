@@ -37,7 +37,7 @@ def register_sale(payload: SaleCreate, db: Session = Depends(get_db)):
 @router.get("/", response_model=list[SaleOut])
 def list_sales(
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(get_current_admin),
 ):
     return db.query(Sale).order_by(Sale.created_at.desc()).all()
 
@@ -46,7 +46,7 @@ def list_sales(
 def get_sale(
     sale_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(get_current_admin),
 ):
     s = db.query(Sale).filter(Sale.id == sale_id).first()
     if not s:
@@ -63,7 +63,7 @@ def update_sale_status(
     sale_id: int,
     payload: SaleUpdateStatus,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    _: User = Depends(get_current_admin),
 ):
     s = db.query(Sale).filter(Sale.id == sale_id).first()
     if not s:
