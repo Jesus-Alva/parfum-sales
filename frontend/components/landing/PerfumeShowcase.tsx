@@ -7,6 +7,7 @@ import { getToken } from "@/lib/auth";
 import ScrollReveal from "@/components/shared/ScrollReveal";
 import CheckoutModal from "@/components/sales/CheckoutModal";
 import { ShoppingBag, Eye } from "lucide-react";
+import Link from "next/link";
 
 export default function PerfumeShowcase() {
   const router = useRouter();
@@ -19,8 +20,8 @@ export default function PerfumeShowcase() {
     setIsAuthed(!!getToken());
     api
       .get("/perfumes/")
-      .then((r) => setPerfumes(r.data.filter((p: any) => p.stock > 0)))
-      .catch(() => {})
+      .then((r) => setPerfumes(r.data.filter((p: any) => p.stock > 0).slice(0, 6)))
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, []);
 
@@ -41,7 +42,7 @@ export default function PerfumeShowcase() {
     <section id="showcase" className="py-24 px-6 relative">
       <ScrollReveal>
         <h2 className="font-display text-4xl md:text-5xl text-center mb-3">
-          Colección <span className="text-gradient-gold">exclusiva</span>
+          Fragancias <span className="text-gradient-gold">destacadas</span>
         </h2>
         <p className="text-center text-scentia-muted mb-4">
           {isAuthed
@@ -135,6 +136,16 @@ export default function PerfumeShowcase() {
               </div>
             </motion.div>
           ))}
+        </div>
+      )}
+      {perfumes.length > 0 && (
+        <div className="text-center mt-12">
+          <Link
+            href="/catalogo"
+            className="inline-flex items-center gap-2 px-8 py-3 rounded-full border border-scentia-gold/40 text-scentia-gold hover:bg-scentia-gold/10 transition"
+          >
+            Ver catálogo completo →
+          </Link>
         </div>
       )}
 

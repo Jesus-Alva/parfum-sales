@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
+from typing import Optional
 
 from app.database import get_db
 from app.api.deps import get_current_user, get_current_admin
@@ -26,8 +28,84 @@ def _sync_images(db: Session, perfume: Perfume, urls: list[str]):
 
 
 @router.get("/", response_model=list[PerfumeOut])
-def list_perfumes(db: Session = Depends(get_db)):
-    return db.query(Perfume).order_by(Perfume.created_at.desc()).all()
+def list_perfumes(
+    search: Optional[str] = Query(None, description="Busca en nombre, marca, notas"),
+    gender: Optional[str] = Query(None),
+    brand: Optional[str] = Query(None),
+    family: Optional[str] = Query(None),
+    tipo: Optional[str] = Query(None),
+    min_price: Optional[float] = Query(None, ge=0),
+    max_price: Optional[float] = Query(None, ge=0),
+    in_stock: Optional[bool] = Query(None),
+    sort_by: Optional[str] = Query(
+        "recent", description="recent|price_asc|price_desc|name"
+    ),
+    db: Session = Depends(get_db),
+):
+    q = db.query(Perfume)
+
+    if search:
+        term = f"%{search}%"
+        q = q.filter(
+            or_(
+                Perfume.name.ilike(term),
+                Perfume.brand.ilike(term),
+                Perfume.notes.ilike(term),
+                Perfume.perfil.ilike(term),
+                Perfume.description.ilike(term),
+            )
+        )
+
+    if gender:
+        q = q.filter(Perfume.gender == gender)
+
+    if brand:
+        q = q.filter(Perfume.brand == brand)
+
+    if family:
+        q = q.filter(Perfume.family == family)
+
+    if tipo:
+        q = q.filter(Perfume.tipo == tipo)
+
+    if min_price is not None:
+        q = q.filter(Perfume.price >= min_price)
+
+    if max_price is not None:
+        q = q.filter(Perfume.price <= max_price)
+
+    if in_stock:
+        q = q.filter(Perfume.stock > 0)
+
+    # Ordenamiento
+    if sort_by == "price_asc":
+        q = q.order_by(Perfume.price.asc())
+    elif sort_by == "price_desc":
+        q = q.order_by(Perfume.price.desc())
+    elif sort_by == "name":
+        q = q.order_by(Perfume.name.asc())
+    else:
+        q = q.order_by(Perfume.created_at.desc())
+
+    return q.all()
+
+
+@router.get("/filters/options")
+def filter_options(db: Session = Depends(get_db)):
+    """Devuelve los valores únicos disponibles para construir los filtros."""
+    brands = [r[0] for r in db.query(Perfume.brand).distinct().all() if r[0]]
+    families = [r[0] for r in db.query(Perfume.family).distinct().all() if r[0]]
+    tipos = [r[0] for r in db.query(Perfume.tipo).distinct().all() if r[0]]
+
+    price_range = db.query(func.min(Perfume.price), func.max(Perfume.price)).first()
+
+    return {
+        "brands": sorted(brands),
+        "families": sorted(families),
+        "tipos": sorted(tipos),
+        "price_min": float(price_range[0] or 0),
+        "price_max": float(price_range[1] or 0),
+    }
 
 
 @router.get("/{perfume_id}", response_model=PerfumeOut)
