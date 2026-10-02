@@ -29,6 +29,9 @@ export default function Hero() {
 
   useEffect(() => {
     setIsAuthed(!!getToken());
+    const syncAuth = () => setIsAuthed(!!getToken());
+    window.addEventListener("scentia:auth-change", syncAuth);
+    return () => window.removeEventListener("scentia:auth-change", syncAuth);
   }, []);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {

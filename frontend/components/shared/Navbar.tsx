@@ -31,8 +31,11 @@ export default function Navbar() {
 
   // Detectar auth y scroll
   useEffect(() => {
-    setIsAuthed(!!getToken());
-    setIsAdminState(isAdmin());
+    const syncAuth = () => {
+      setIsAuthed(!!getToken());
+      setIsAdminState(isAdmin());
+    };
+    syncAuth();
     const handleScroll = () => {
       const hasScrolled = window.scrollY > 30;
       setScrolled(hasScrolled);
@@ -40,7 +43,11 @@ export default function Navbar() {
     };
     handleScroll();
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("scentia:auth-change", syncAuth);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("scentia:auth-change", syncAuth);
+    };
   }, [pathname]);
 
   // Cerrar menú móvil al cambiar de ruta
@@ -133,8 +140,8 @@ export default function Navbar() {
             {isAuthed && (
               <Link
                 href="/carrito"
-                className="relative p-2 rounded-full hover:bg-white/5 transition"
-                title="Carrito de compras"
+                className="group relative rounded-full p-2 transition hover:bg-white/5"
+                aria-label="Mi carrito"
               >
                 <ShoppingBag size={18} className="text-scentia-text" />
                 {cartCount > 0 && (
@@ -142,6 +149,7 @@ export default function Navbar() {
                     {cartCount}
                   </span>
                 )}
+                <span role="tooltip" className="pointer-events-none absolute right-0 top-full z-50 mt-2 whitespace-nowrap rounded-md border border-scentia-border bg-scentia-card px-2.5 py-1.5 text-xs text-scentia-text opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">Mi carrito</span>
               </Link>
             )}
 
@@ -149,11 +157,11 @@ export default function Navbar() {
               <>
                 <Link
                   href="/mis-pedidos"
-                  className="flex items-center gap-2 px-3 py-2 rounded-full border border-scentia-gold/40 text-scentia-gold text-sm hover:bg-scentia-gold/10 transition"
-                  title="Mis pedidos"
+                  className="group relative rounded-full p-2 transition hover:bg-white/5"
+                  aria-label="Mis pedidos"
                 >
-                  <PackageSearch size={15} />
-                  Mis pedidos
+                  <PackageSearch size={18} className="text-scentia-text" />
+                  <span role="tooltip" className="pointer-events-none absolute right-0 top-full z-50 mt-2 whitespace-nowrap rounded-md border border-scentia-border bg-scentia-card px-2.5 py-1.5 text-xs text-scentia-text opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">Mis pedidos</span>
                 </Link>
                 {isAdminState && (
                   <>
@@ -168,10 +176,11 @@ export default function Navbar() {
                 )}
                 <button
                   onClick={handleLogout}
-                  className="p-2 rounded-full hover:bg-red-500/10 text-scentia-muted hover:text-red-400 transition"
-                  title="Cerrar sesión"
+                  className="group relative rounded-full p-2 text-scentia-muted transition hover:bg-red-500/10 hover:text-red-400"
+                  aria-label="Cerrar sesión"
                 >
                   <LogOut size={16} />
+                  <span role="tooltip" className="pointer-events-none absolute right-0 top-full z-50 mt-2 whitespace-nowrap rounded-md border border-scentia-border bg-scentia-card px-2.5 py-1.5 text-xs text-scentia-text opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">Cerrar sesión</span>
                 </button>
               </>
             ) : (

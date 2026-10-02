@@ -29,9 +29,16 @@ export default function PerfumeShowcase() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    const syncAuth = () => setIsAuthed(!!getToken());
+    window.addEventListener("scentia:auth-change", syncAuth);
+    return () => window.removeEventListener("scentia:auth-change", syncAuth);
+  }, []);
+
   const handleAddToCart = (e: React.MouseEvent, perfume: any) => {
     e.stopPropagation();   // 👈 evita que también navegue al detalle
-    if (!isAuthed) {
+    if (!getToken()) {
+      setIsAuthed(false);
       router.push(`/login?next=/perfumes/${perfume.id}`);
       return;
     }
@@ -42,7 +49,8 @@ export default function PerfumeShowcase() {
 
   const handleBuyNow = (e: React.MouseEvent, perfume: any) => {
     e.stopPropagation();
-    if (!isAuthed) {
+    if (!getToken()) {
+      setIsAuthed(false);
       router.push(`/login?next=/perfumes/${perfume.id}`);
       return;
     }

@@ -62,6 +62,12 @@ export default function CatalogPage() {
         api.get("/perfumes/filters/options").then((r) => setOptions(r.data)).catch(() => { });
     }, []);
 
+    useEffect(() => {
+        const syncAuth = () => setIsAuthed(!!getToken());
+        window.addEventListener("scentia:auth-change", syncAuth);
+        return () => window.removeEventListener("scentia:auth-change", syncAuth);
+    }, []);
+
     // Cargar perfumes cada vez que cambien los filtros (con debounce)
     useEffect(() => {
         setLoading(true);
@@ -96,7 +102,8 @@ export default function CatalogPage() {
 
     const handleAddToCart = (event: React.MouseEvent, perfume: any) => {
         event.stopPropagation();
-        if (!isAuthed) {
+        if (!getToken()) {
+            setIsAuthed(false);
             router.push(`/login?next=/perfumes/${perfume.id}`);
             return;
         }
@@ -105,7 +112,8 @@ export default function CatalogPage() {
 
     const handleBuyNow = (event: React.MouseEvent, perfume: any) => {
         event.stopPropagation();
-        if (!isAuthed) {
+        if (!getToken()) {
+            setIsAuthed(false);
             router.push(`/login?next=/perfumes/${perfume.id}`);
             return;
         }

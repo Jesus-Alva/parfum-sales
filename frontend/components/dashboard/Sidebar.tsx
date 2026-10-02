@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, SprayCan, ShoppingBag, BarChart3, MapPin, PackageSearch } from "lucide-react";
+import { LayoutDashboard, SprayCan, ShoppingBag, BarChart3, MapPin, PackageSearch, Database } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isAdmin as isAdminFn } from "@/lib/auth";
 
@@ -13,6 +13,7 @@ const ALL_ITEMS = [
   { href: "/orders", label: "Pedidos", icon: PackageSearch, adminOnly: true },
   { href: "/delivery-locations", label: "Ubicaciones", icon: MapPin, adminOnly: true },
   { href: "/analytics", label: "Analytics", icon: BarChart3, adminOnly: true },
+  { href: "/backup", label: "Respaldo BD", icon: Database, adminOnly: true },
 ];
 
 export default function Sidebar() {
