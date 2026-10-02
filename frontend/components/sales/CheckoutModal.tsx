@@ -38,6 +38,7 @@ export default function CheckoutModal({
   const [businessAddress, setBusinessAddress] = useState({ city: "", state: "" });
   const [businessCoordinates, setBusinessCoordinates] = useState<{ latitude: number; longitude: number } | null>(BUSINESS_MAP_CENTER);
   const [preferredLocationId, setPreferredLocationId] = useState("");
+  const [addressSaved, setAddressSaved] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<any>(null);
   const [error, setError] = useState("");
@@ -48,8 +49,13 @@ export default function CheckoutModal({
     if (getToken()) {
       api.get("/users/me")
         .then(({ data }) => {
-          if (cancelled || !data.full_name) return;
-          setForm((prev) => prev.buyer_name.trim() ? prev : { ...prev, buyer_name: data.full_name });
+          if (cancelled) return;
+          setForm((prev) => ({
+            ...prev,
+            buyer_name: prev.buyer_name.trim() ? prev.buyer_name : data.full_name || prev.buyer_name,
+            ...(data.address ? { address: { ...data.address } } : {}),
+          }));
+          setAddressSaved(Boolean(data.address));
         })
         .catch(() => undefined);
     }
@@ -66,7 +72,6 @@ export default function CheckoutModal({
             ...prev.address,
             city: prev.address.city || city,
             state: prev.address.state || state,
-            ...BUSINESS_MAP_CENTER,
           },
         }));
       })
@@ -90,6 +95,10 @@ export default function CheckoutModal({
     setLoading(true);
     setError("");
     try {
+      if (getToken() && !addressSaved) {
+        await api.put("/users/me/address", form.address);
+        setAddressSaved(true);
+      }
       const { data } = await api.post("/sales/", {
         items: items.map((item) => ({ perfume_id: item.perfumeId, quantity: item.quantity })),
         buyer_name: form.buyer_name,
@@ -163,7 +172,7 @@ export default function CheckoutModal({
           ) : (
             <form onSubmit={submit}>
               <h2 className="font-display text-2xl mb-1 text-gradient-gold">
-                Finalizar compra
+                Realizar pedido
               </h2>
               <p className="text-scentia-muted text-sm mb-5">
                 {items.length} producto{items.length === 1 ? "" : "s"} · ${total.toFixed(2)}
@@ -205,6 +214,18 @@ export default function CheckoutModal({
                 <div className="border-t border-scentia-border pt-3">
                   <p className="text-xs uppercase tracking-widest text-scentia-gold mb-2">
                     Dirección del comprador
+                  </p>
+                  {addressSaved ? (
+                    <div className="rounded-lg border border-scentia-border bg-scentia-card/50 p-3 text-sm">
+                      <p className="font-medium">Dirección registrada</p>
+                      <p className="mt-1 text-xs text-scentia-muted">
+                        {form.address.street} {form.address.number}, {form.address.city}, {form.address.state} {form.address.postal_code}
+                      </p>
+                      <p className="mt-2 text-xs text-scentia-muted">Usaremos esta dirección para considerar envíos por paquetería en futuros pedidos.</p>
+                    </div>
+                  ) : <>
+                  <p className="mb-3 text-xs leading-relaxed text-scentia-muted">
+                    Solicitamos esta dirección para tener tus datos disponibles y considerar un envío por paquetería en el futuro.
                   </p>
                   <div className="grid grid-cols-2 gap-3">
                     <input
@@ -257,6 +278,7 @@ export default function CheckoutModal({
                       onChange={(latitude, longitude) => setForm((prev) => ({ ...prev, address: { ...prev.address, latitude, longitude } }))}
                     />
                   </div>}
+                  </>}
                 </div>
 
                 {isLocal && (

@@ -6,12 +6,33 @@ from app.database import get_db
 from app.api.deps import get_current_user, get_current_admin
 from app.models.user import User
 from app.schemas.user import UserOut
+from app.schemas.sale import AddressCreate
+from app.models.address import Address
 
 router = APIRouter()
 
 
 @router.get("/me", response_model=UserOut)
 def me(current: User = Depends(get_current_user)):
+    return current
+
+
+@router.put("/me/address", response_model=UserOut)
+def save_my_address(
+    payload: AddressCreate,
+    db: Session = Depends(get_db),
+    current: User = Depends(get_current_user),
+):
+    if current.address:
+        for key, value in payload.model_dump().items():
+            setattr(current.address, key, value)
+    else:
+        address = Address(**payload.model_dump())
+        db.add(address)
+        db.flush()
+        current.address_id = address.id
+    db.commit()
+    db.refresh(current)
     return current
 
 

@@ -75,7 +75,7 @@ export default function CartPage() {
               <div className="mt-4 flex justify-between text-sm text-scentia-muted"><span>Productos</span><span>{items.reduce((sum, item) => sum + item.quantity, 0)}</span></div>
               <div className="mt-3 flex justify-between border-t border-scentia-border pt-3 text-lg font-semibold"><span>Total</span><span className="text-scentia-gold">${total.toFixed(2)}</span></div>
               <p className="mt-3 text-xs text-scentia-muted">En el siguiente paso podrás elegir el punto de entrega local o agregar el domicilio para paquetería.</p>
-              <button type="button" onClick={() => setCheckoutOpen(true)} className="mt-5 w-full rounded-lg bg-gradient-to-r from-scentia-gold to-scentia-gold-soft py-2.5 font-semibold text-black">Continuar compra</button>
+              <button type="button" onClick={() => setCheckoutOpen(true)} className="mt-5 w-full rounded-lg bg-gradient-to-r from-scentia-gold to-scentia-gold-soft py-2.5 font-semibold text-black">Continuar con el pedido</button>
             </aside>
           </div>
         )}

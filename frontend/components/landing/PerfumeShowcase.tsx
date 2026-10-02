@@ -141,7 +141,7 @@ export default function PerfumeShowcase() {
                     </p>
                   </div>
                   <div className="flex gap-2 relative z-20">
-                    <button type="button" onClick={(e) => handleBuyNow(e, p)} className="rounded-lg border border-scentia-gold/40 px-3 py-2 text-xs font-semibold text-scentia-gold hover:bg-scentia-gold/10 transition">Comprar</button>
+                    <button type="button" onClick={(e) => handleBuyNow(e, p)} className="rounded-lg border border-scentia-gold/40 px-3 py-2 text-xs font-semibold text-scentia-gold hover:bg-scentia-gold/10 transition">Realizar pedido</button>
                     <button type="button" onClick={(e) => handleAddToCart(e, p)} className="bg-gradient-to-r from-scentia-gold to-scentia-gold-soft text-black font-semibold px-3 py-2 rounded-lg hover:opacity-90 transition flex items-center gap-2">
                       <ShoppingBag size={15} />{isAuthed ? "Agregar" : "Regístrate"}
                     </button>

@@ -23,6 +23,7 @@ export default function Navbar() {
   const [isAdminState, setIsAdminState] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [navRevealed, setNavRevealed] = useState(false);
 
   const cartCount = useCartStore((s) =>
     s.items.reduce((acc, i) => acc + i.quantity, 0)
@@ -32,7 +33,11 @@ export default function Navbar() {
   useEffect(() => {
     setIsAuthed(!!getToken());
     setIsAdminState(isAdmin());
-    const handleScroll = () => setScrolled(window.scrollY > 30);
+    const handleScroll = () => {
+      const hasScrolled = window.scrollY > 30;
+      setScrolled(hasScrolled);
+      if (hasScrolled) setNavRevealed(false);
+    };
     handleScroll();
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
@@ -41,6 +46,7 @@ export default function Navbar() {
   // Cerrar menú móvil al cambiar de ruta
   useEffect(() => {
     setMobileOpen(false);
+    setNavRevealed(false);
   }, [pathname]);
 
   const handleLogout = () => {
@@ -50,17 +56,42 @@ export default function Navbar() {
   };
 
   const isLanding = pathname === "/";
+  const hideAtTop = isLanding && !scrolled && !mobileOpen && !navRevealed;
 
   return (
     <>
+      {hideAtTop && (
+        <button
+          type="button"
+          aria-label="Mostrar navegación"
+          title="Mostrar navegación"
+          onMouseEnter={() => setNavRevealed(true)}
+          onFocus={() => setNavRevealed(true)}
+          onClick={() => setNavRevealed(true)}
+          className="fixed inset-x-0 top-0 z-[10000] flex h-4 items-start justify-center group"
+        >
+          <motion.span
+            animate={{ y: [0, 5, 0] }}
+            transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+            className="mt-1 h-1 w-10 rounded-full bg-scentia-gold/70 shadow-[0_0_12px_rgba(212,175,55,0.45)] transition-all duration-300 group-hover:w-16 group-hover:bg-scentia-gold"
+          />
+          <span className="sr-only">Mostrar navegación</span>
+        </button>
+      )}
       <motion.nav
-        initial={{ y: -80 }}
-        animate={{ y: 0 }}
+        initial={false}
+        animate={{ y: hideAtTop ? -100 : 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
+        onMouseEnter={() => {
+          if (isLanding && !scrolled) setNavRevealed(true);
+        }}
+        onMouseLeave={() => {
+          if (isLanding && !scrolled && !mobileOpen) setNavRevealed(false);
+        }}
         className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-          scrolled
-            ? "bg-scentia-bg/85 backdrop-blur-xl border-b border-scentia-border/60 py-3"
+          "fixed top-0 left-0 right-0 z-[9999] transition-all duration-300",
+          scrolled || isLanding
+            ? "bg-scentia-bg/50 backdrop-blur-xl border-b border-scentia-border/60 py-3"
             : "bg-transparent py-5"
         )}
       >

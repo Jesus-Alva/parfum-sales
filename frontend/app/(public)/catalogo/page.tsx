@@ -396,7 +396,7 @@ export default function CatalogPage() {
                                             </span>
                                         </div>
                                         <div className="mt-4 flex gap-2">
-                                            <button type="button" disabled={p.stock <= 0} onClick={(event) => handleBuyNow(event, p)} className="flex-1 rounded-lg border border-scentia-gold/40 px-2 py-2 text-sm text-scentia-gold transition hover:bg-scentia-gold/10 disabled:opacity-40">Comprar</button>
+                                            <button type="button" disabled={p.stock <= 0} onClick={(event) => handleBuyNow(event, p)} className="flex-1 rounded-lg border border-scentia-gold/40 px-2 py-2 text-sm text-scentia-gold transition hover:bg-scentia-gold/10 disabled:opacity-40">Realizar pedido</button>
                                             <button type="button" disabled={p.stock <= 0} onClick={(event) => handleAddToCart(event, p)} className="flex-1 rounded-lg bg-gradient-to-r from-scentia-gold to-scentia-gold-soft px-2 py-2 text-sm font-semibold text-black transition hover:opacity-90 disabled:opacity-40">Agregar al carrito</button>
                                         </div>
                                     </motion.div>

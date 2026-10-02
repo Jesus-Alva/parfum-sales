@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
+from app.schemas.sale import AddressOut
 
 
 class UserBase(BaseModel):
@@ -16,6 +17,7 @@ class UserOut(UserBase):
     is_active: bool
     is_admin: bool
     created_at: datetime
+    address: AddressOut | None = None
 
     class Config:
         from_attributes = True

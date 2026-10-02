@@ -232,7 +232,7 @@ export default function PerfumeDetailView({ perfume }: { perfume: any }) {
           <motion.div variants={fadeUp} className="pt-2">
             <div className="grid grid-cols-2 gap-3">
               <button type="button" onClick={handleBuyNow} disabled={!inStock} className="rounded-xl border border-scentia-gold/50 px-3 py-4 font-semibold text-scentia-gold transition hover:bg-scentia-gold/10 disabled:opacity-40 disabled:cursor-not-allowed">
-                {inStock ? getToken() ? "Comprar ahora" : "Inicia sesión" : "Sin stock"}
+                {inStock ? getToken() ? "Realizar pedido" : "Inicia sesión" : "Sin stock"}
               </button>
               <button
                 type="button"
