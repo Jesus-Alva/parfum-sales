@@ -4,17 +4,17 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import LocationPicker from "@/components/shared/LocationPicker";
 import LocationMap from "@/components/shared/LocationMap";
-import { geocodeWithPhoton } from "@/lib/geocoding";
 
 type Location = { id: number; name: string; address: string; city: string; state: string; latitude: number; longitude: number; notes: string; is_active: boolean };
-const blank = { name: "", address: "", city: "", state: "", latitude: null as number | null, longitude: null as number | null, notes: "", is_active: true };
+const INITIAL_DELIVERY_POINT = { latitude: 19.6681961, longitude: -99.0188746 };
+const blank = { name: "", address: "", city: "", state: "", ...INITIAL_DELIVERY_POINT, notes: "", is_active: true };
 
 export default function DeliveryLocationsPage() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [form, setForm] = useState(blank);
   const [businessCity, setBusinessCity] = useState("");
   const [businessState, setBusinessState] = useState("");
-  const [businessCoordinates, setBusinessCoordinates] = useState<{ latitude: number; longitude: number } | undefined>();
+  const [businessCoordinates] = useState<{ latitude: number; longitude: number }>(INITIAL_DELIVERY_POINT);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -24,10 +24,6 @@ export default function DeliveryLocationsPage() {
     setLocations(locationsData);
     setBusinessCity(settings.business_city || "");
     setBusinessState(settings.business_state || "");
-    if (settings.business_city && !businessCoordinates) {
-      const center = await geocodeWithPhoton([settings.business_city, settings.business_state, "México"].filter(Boolean).join(", ")).catch(() => null);
-      if (center) setBusinessCoordinates(center);
-    }
     if (settings.business_city) setForm((current) => ({ ...current, city: current.city || settings.business_city, state: current.state || settings.business_state || "" }));
   };
 

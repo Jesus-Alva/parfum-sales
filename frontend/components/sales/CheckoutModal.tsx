@@ -1,11 +1,12 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { api } from "@/lib/api";
-import LocationMap from "@/components/shared/LocationMap";
 import InteractiveMap from "@/components/shared/InteractiveMap";
-import { geocodeWithPhoton } from "@/lib/geocoding";
+import DeliveryLocationsMap from "@/components/shared/DeliveryLocationsMap";
+
+const BUSINESS_MAP_CENTER = { latitude: 19.6681961, longitude: -99.0188746};
 
 export default function CheckoutModal({
   perfume,
@@ -26,15 +27,13 @@ export default function CheckoutModal({
       postal_code: "",
       country: "México",
       references: "",
-      latitude: null as number | null,
-      longitude: null as number | null,
+      latitude: BUSINESS_MAP_CENTER.latitude as number | null,
+      longitude: BUSINESS_MAP_CENTER.longitude as number | null,
     },
   });
   const [locations, setLocations] = useState<any[]>([]);
   const [businessAddress, setBusinessAddress] = useState({ city: "", state: "" });
-  const [businessCoordinates, setBusinessCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [mapStatus, setMapStatus] = useState("");
-  const addressLookupRef = useRef<AbortController | null>(null);
+  const [businessCoordinates, setBusinessCoordinates] = useState<{ latitude: number; longitude: number } | null>(BUSINESS_MAP_CENTER);
   const [preferredLocationId, setPreferredLocationId] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<any>(null);
@@ -43,55 +42,28 @@ export default function CheckoutModal({
   useEffect(() => {
     let cancelled = false;
     Promise.all([api.get("/delivery-locations/"), api.get("/delivery-locations/settings")])
-      .then(async ([locationResponse, settingsResponse]) => {
+      .then(([locationResponse, settingsResponse]) => {
         if (cancelled) return;
         setLocations(locationResponse.data);
         const city = settingsResponse.data.business_city || "";
         const state = settingsResponse.data.business_state || "";
         setBusinessAddress({ city, state });
-        if (!city) {
-          setMapStatus("Configura BUSINESS_CITY para centrar el mapa en la sede.");
-          return;
-        }
-        try {
-          const center = await geocodeWithPhoton([city, state, "México"].filter(Boolean).join(", "));
-          if (cancelled) return;
-          if (center) {
-            setBusinessCoordinates(center);
-            setForm((prev) => prev.address.latitude == null ? { ...prev, address: { ...prev.address, ...center } } : prev);
-            setMapStatus("Mapa centrado en el municipio de la sede.");
-          } else setMapStatus("No encontramos el municipio de la sede; ajusta el pin en el mapa.");
-        } catch {
-          if (!cancelled) setMapStatus("No pudimos centrar el mapa; ajusta el pin manualmente.");
-        }
+        setForm((prev) => ({
+          ...prev,
+          address: {
+            ...prev.address,
+            city: prev.address.city || city,
+            state: prev.address.state || state,
+            ...BUSINESS_MAP_CENTER,
+          },
+        }));
       })
-      .catch(() => { if (!cancelled) setMapStatus("No se pudieron cargar los puntos de entrega."); });
+      .catch(() => { if (!cancelled) setLocations([]); });
     return () => { cancelled = true; };
   }, []);
 
-  useEffect(() => {
-    const { street, number, city, state, postal_code, country } = form.address;
-    if (!businessCoordinates || city.trim().length < 2) return;
-    const query = [street, number, postal_code, city, state, country].filter(Boolean).join(", ");
-    const controller = new AbortController();
-    addressLookupRef.current = controller;
-    setMapStatus("Ajustando el pin a la dirección…");
-    const timer = window.setTimeout(() => {
-      geocodeWithPhoton(query, businessCoordinates, controller.signal)
-        .then((point) => {
-          if (controller.signal.aborted) return;
-          if (point) {
-            setForm((prev) => ({ ...prev, address: { ...prev.address, ...point } }));
-            setMapStatus("Ubicación aproximada por dirección. Arrastra el pin para corregirla si hace falta.");
-          } else setMapStatus("No encontramos esa dirección; puedes colocar el pin en el mapa.");
-        })
-        .catch((e) => { if (e?.name !== "AbortError" && !controller.signal.aborted) setMapStatus("No pudimos ajustar el pin. Puedes colocarlo en el mapa."); });
-    }, 900);
-    return () => { window.clearTimeout(timer); controller.abort(); };
-  }, [form.address.street, form.address.number, form.address.city, form.address.state, form.address.postal_code, businessCoordinates]);
-
   const normalized = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLocaleLowerCase();
-  const isLocal = useMemo(() => Boolean(businessAddress.city) && normalized(form.address.city) === normalized(businessAddress.city) && (!businessAddress.state || normalized(form.address.state) === normalized(businessAddress.state)), [businessAddress, form.address.city, form.address.state]);
+  const isLocal = useMemo(() => Boolean(businessAddress.city) && normalized(form.address.city) === normalized(businessAddress.city), [businessAddress.city, form.address.city]);
 
   const updateAddress = (k: string, v: string) =>
     setForm({ ...form, address: { ...form.address, [k]: v } });
@@ -256,32 +228,27 @@ export default function CheckoutModal({
                       onChange={(e) => updateAddress("references", e.target.value)}
                     />
                   </div>
-                  <div className="mt-3 space-y-2">
-                    <p className="text-xs text-scentia-muted">El pin parte del municipio de la sede y se aproxima conforme completas la dirección. Puedes arrastrarlo o tocar el mapa para corregirlo.</p>
+                  {!isLocal && <div className="mt-3 space-y-2">
+                    <p className="text-xs text-scentia-muted">Para envíos por paquetería, puedes señalar el domicilio en el mapa.</p>
                     <InteractiveMap
                       latitude={form.address.latitude}
                       longitude={form.address.longitude}
                       initialCenter={businessCoordinates || undefined}
                       label="Dirección del comprador"
-                      onChange={(latitude, longitude) => {
-                        addressLookupRef.current?.abort();
-                        setForm((prev) => ({ ...prev, address: { ...prev.address, latitude, longitude } }));
-                        setMapStatus("Ubicación ajustada en el mapa.");
-                      }}
+                      onChange={(latitude, longitude) => setForm((prev) => ({ ...prev, address: { ...prev.address, latitude, longitude } }))}
                     />
-                    {mapStatus && <p aria-live="polite" className="text-xs text-scentia-muted">{mapStatus}</p>}
-                    <p className="text-[11px] text-scentia-muted">El texto de la dirección se usa para ubicar el pin con Photon, un geocodificador de datos OpenStreetMap. <a href="https://github.com/komoot/photon" target="_blank" rel="noreferrer" className="text-scentia-gold hover:underline">Ver Photon</a>.</p>
-                  </div>
+                  </div>}
                 </div>
 
                 {isLocal && (
                   <div className="border-t border-scentia-border pt-3">
                     <p className="text-xs uppercase tracking-widest text-scentia-gold mb-1">Entrega dentro de {businessAddress.city}</p>
                     <p className="text-xs text-scentia-muted mb-3">Elige el punto que prefieres. El administrador confirmará el lugar y horario contigo por Telegram.</p>
-                    {locations.length === 0 ? <p className="rounded-lg border border-amber-400/20 bg-amber-400/5 p-3 text-xs text-amber-100">Aún no hay puntos de entrega disponibles. Contáctanos para coordinar tu pedido.</p> : <div className="space-y-3">{locations.map((location) => (
+                    {locations.length === 0 ? <p className="rounded-lg border border-amber-400/20 bg-amber-400/5 p-3 text-xs text-amber-100">Aún no hay puntos de entrega disponibles. Contáctanos para coordinar tu pedido.</p> : <div className="space-y-3">
+                      <DeliveryLocationsMap locations={locations} selectedLocationId={preferredLocationId} initialCenter={businessCoordinates || BUSINESS_MAP_CENTER} onSelect={setPreferredLocationId} />
+                      {locations.map((location) => (
                       <label key={location.id} className={`block cursor-pointer rounded-xl border p-3 transition ${preferredLocationId === String(location.id) ? "border-scentia-gold/60 bg-scentia-gold/5" : "border-scentia-border"}`}>
                         <span className="flex items-start gap-2"><input type="radio" name="delivery-location" value={location.id} checked={preferredLocationId === String(location.id)} onChange={() => setPreferredLocationId(String(location.id))} className="mt-1 accent-[#d4af37]" /><span><strong className="text-sm">{location.name}</strong><span className="block text-xs text-scentia-muted">{location.address}, {location.city}</span>{location.notes && <span className="mt-1 block text-xs text-scentia-muted">{location.notes}</span>}</span></span>
-                        {preferredLocationId === String(location.id) && <LocationMap latitude={location.latitude} longitude={location.longitude} label={location.name} className="mt-3" />}
                       </label>
                     ))}</div>}
                   </div>
