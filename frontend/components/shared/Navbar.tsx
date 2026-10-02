@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ShoppingBag, User, LogOut, LayoutDashboard } from "lucide-react";
+import { Menu, X, ShoppingBag, User, LogOut, LayoutDashboard, PackageSearch } from "lucide-react";
 import { getToken, clearToken, isAdmin } from "@/lib/auth";
 import { useCartStore } from "@/store/cartStore";
 import { cn } from "@/lib/utils";
@@ -147,14 +147,24 @@ export default function Navbar() {
 
             {isAuthed ? (
               <>
+                <Link
+                  href="/mis-pedidos"
+                  className="flex items-center gap-2 px-3 py-2 rounded-full border border-scentia-gold/40 text-scentia-gold text-sm hover:bg-scentia-gold/10 transition"
+                  title="Mis pedidos"
+                >
+                  <PackageSearch size={15} />
+                  Mis pedidos
+                </Link>
                 {isAdminState && (
+                  <>
                     <Link
-                    href="/dashboard"
-                    className="flex items-center gap-2 px-4 py-2 rounded-full border border-scentia-gold/40 text-scentia-gold text-sm hover:bg-scentia-gold/10 transition"
-                  >
-                    <LayoutDashboard size={14} />
-                    Panel
-                  </Link>
+                      href="/dashboard"
+                      className="flex items-center gap-2 px-4 py-2 rounded-full border border-scentia-gold/40 text-scentia-gold text-sm hover:bg-scentia-gold/10 transition"
+                    >
+                      <LayoutDashboard size={14} />
+                      Panel
+                    </Link>
+                  </>
                 )}
                 <button
                   onClick={handleLogout}
@@ -168,8 +178,9 @@ export default function Navbar() {
               <>
                 <Link
                   href="/login"
-                  className="text-sm text-scentia-text/80 hover:text-scentia-gold transition px-3"
+                  className="flex items-center gap-1.5 text-sm text-scentia-text/80 hover:text-scentia-gold transition px-3"
                 >
+                  <User size={15} />
                   Iniciar sesión
                 </Link>
                 <Link
@@ -250,6 +261,7 @@ export default function Navbar() {
               <div className="p-6 border-t border-scentia-border space-y-3">
                 {isAuthed ? (
                   <>
+                    <Link href="/mis-pedidos" className="flex items-center justify-center gap-2 w-full py-3 rounded-full border border-scentia-gold/40 text-scentia-gold font-semibold"><PackageSearch size={16} />Mis pedidos</Link>
                     <Link
                       href="/dashboard"
                       className="flex items-center justify-center gap-2 w-full py-3 rounded-full bg-gradient-to-r from-scentia-gold to-scentia-gold-soft text-black font-semibold"

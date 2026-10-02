@@ -5,7 +5,7 @@ from datetime import datetime
 
 
 from app.database import get_db
-from app.api.deps import get_current_user, get_current_admin
+from app.api.deps import get_current_admin, get_current_user, get_optional_user
 from app.models.sale import Sale
 from app.models.user import User
 from app.schemas.sale import SaleCreate, SaleOut
@@ -17,9 +17,9 @@ router = APIRouter()
 
 
 @router.post("/", response_model=SaleOut, status_code=201)
-def register_sale(payload: SaleCreate, db: Session = Depends(get_db)):
+def register_sale(payload: SaleCreate, db: Session = Depends(get_db), current: User | None = Depends(get_optional_user)):
     try:
-        sale = create_sale(db, payload)
+        sale = create_sale(db, payload, current.id if current else None)
     except ValueError as e:
         raise HTTPException(400, str(e))
 
@@ -38,6 +38,11 @@ def register_sale(payload: SaleCreate, db: Session = Depends(get_db)):
         "preferred_location": sale.preferred_delivery_location.name if sale.preferred_delivery_location else "Por paquetería",
     })
     return sale
+
+
+@router.get("/my-orders", response_model=list[SaleOut])
+def list_my_orders(db: Session = Depends(get_db), current: User = Depends(get_current_user)):
+    return db.query(Sale).filter(Sale.user_id == current.id).order_by(Sale.created_at.desc()).all()
 
 
 @router.get("/", response_model=list[SaleOut])

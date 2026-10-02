@@ -19,7 +19,7 @@ def generate_folio() -> str:
     return f"SCN-{ts}-{rand}"
 
 
-def create_sale(db: Session, payload: SaleCreate) -> Sale:
+def create_sale(db: Session, payload: SaleCreate, user_id: int | None = None) -> Sale:
     quantities: dict[int, int] = {}
     for item in payload.items:
         quantities[item.perfume_id] = quantities.get(item.perfume_id, 0) + item.quantity
@@ -66,6 +66,7 @@ def create_sale(db: Session, payload: SaleCreate) -> Sale:
         buyer_name=payload.buyer_name,
         buyer_phone=payload.buyer_phone,
         address_id=address.id,
+        user_id=user_id,
         quantity=sum(quantities.values()),
         unit_price=first_perfume.price,
         total=total,

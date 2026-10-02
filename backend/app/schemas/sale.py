@@ -66,12 +66,23 @@ class SaleItemOut(BaseModel):
         from_attributes = True
 
 
+class SaleUserOut(BaseModel):
+    id: int
+    email: str
+    full_name: str
+
+    class Config:
+        from_attributes = True
+
+
 class SaleOut(BaseModel):
     id: int
     folio: str
     perfume_id: int
     buyer_name: str
     buyer_phone: str
+    user_id: int | None = None
+    user: SaleUserOut | None = None
     quantity: int
     unit_price: float
     total: float

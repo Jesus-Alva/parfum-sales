@@ -3,6 +3,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
 
 from app.database import Base
+from app.models.user import User
 
 
 class Sale(Base):
@@ -14,6 +15,7 @@ class Sale(Base):
     buyer_name: Mapped[str] = mapped_column(String(255), nullable=False)
     buyer_phone: Mapped[str] = mapped_column(String(30), nullable=False)
     address_id: Mapped[int] = mapped_column(ForeignKey("addresses.id"), nullable=False)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
     quantity: Mapped[int] = mapped_column(Integer, default=1)
     unit_price: Mapped[float] = mapped_column(Float, nullable=False)
     total: Mapped[float] = mapped_column(Float, nullable=False)
@@ -30,6 +32,7 @@ class Sale(Base):
 
     perfume = relationship("Perfume")
     address = relationship("Address")
+    user = relationship("User", foreign_keys=[user_id])
     items = relationship("SaleItem", back_populates="sale", cascade="all, delete-orphan", order_by="SaleItem.id")
     preferred_delivery_location = relationship("DeliveryLocation", foreign_keys=[preferred_delivery_location_id])
     delivery_location = relationship("DeliveryLocation", foreign_keys=[delivery_location_id])
