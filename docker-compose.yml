@@ -63,6 +63,8 @@ services:
     container_name: scentia_backend
     restart: always
     env_file: .env
+    environment:
+      BACKUP_DIR: /app/backups
     depends_on:
       postgres:
         condition: service_healthy
@@ -72,6 +74,7 @@ services:
       - ./backend:/app
       - /app/__pycache__
       - ./backend/uploads:/app/uploads  
+      - ./backups:/app/backups
     ports:
       - "8000:8000"
     networks:

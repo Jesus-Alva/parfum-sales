@@ -154,7 +154,7 @@ export default function CheckoutModal({
                 ¡Pedido recibido!
               </h2>
               <p className="text-scentia-muted text-sm mb-4">
-                {success.delivery_type === "local" ? "Notificamos al equipo. Te confirmaremos por Telegram el lugar y horario de entrega." : "Notificamos al equipo para preparar el envío por paquetería."}
+                {success.delivery_type === "local" ? "Notificamos al equipo. Te confirmaremos por Telegram el lugar y horario de entrega." : "Notificamos al equipo para preparar la entrega del pedido."}
               </p>
               <div className="bg-scentia-card border border-scentia-border rounded-xl p-4 text-left">
                 <p className="text-xs text-scentia-muted">Folio</p>
