@@ -1,15 +1,19 @@
 import { create } from "zustand";
 
-type CartItem = {
+export type CartItem = {
   perfumeId: number;
   name: string;
+  brand: string;
+  imageUrl: string;
   price: number;
+  stock: number;
   quantity: number;
 };
 
 type CartState = {
   items: CartItem[];
   add: (item: CartItem) => void;
+  updateQuantity: (perfumeId: number, quantity: number) => void;
   remove: (perfumeId: number) => void;
   clear: () => void;
   total: () => number;
@@ -24,7 +28,7 @@ export const useCartStore = create<CartState>((set, get) => ({
         return {
           items: state.items.map((i) =>
             i.perfumeId === item.perfumeId
-              ? { ...i, quantity: i.quantity + item.quantity }
+              ? { ...i, ...item, quantity: Math.min(i.stock, i.quantity + item.quantity) }
               : i
           ),
         };
@@ -34,6 +38,12 @@ export const useCartStore = create<CartState>((set, get) => ({
   remove: (perfumeId) =>
     set((state) => ({
       items: state.items.filter((i) => i.perfumeId !== perfumeId),
+    })),
+  updateQuantity: (perfumeId, quantity) =>
+    set((state) => ({
+      items: state.items.map((item) => item.perfumeId === perfumeId
+        ? { ...item, quantity: Math.max(1, Math.min(item.stock, quantity)) }
+        : item),
     })),
   clear: () => set({ items: [] }),
   total: () =>

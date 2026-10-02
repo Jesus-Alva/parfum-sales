@@ -101,9 +101,9 @@ export default function Navbar() {
             {/* Carrito (solo si auth) */}
             {isAuthed && (
               <Link
-                href="/sales"
+                href="/carrito"
                 className="relative p-2 rounded-full hover:bg-white/5 transition"
-                title="Mis ventas"
+                title="Carrito de compras"
               >
                 <ShoppingBag size={18} className="text-scentia-text" />
                 {cartCount > 0 && (

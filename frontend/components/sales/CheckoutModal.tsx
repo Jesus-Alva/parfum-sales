@@ -6,20 +6,22 @@ import { api } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import InteractiveMap from "@/components/shared/InteractiveMap";
 import DeliveryLocationsMap from "@/components/shared/DeliveryLocationsMap";
+import type { CartItem } from "@/store/cartStore";
 
 const BUSINESS_MAP_CENTER = { latitude: 19.6681961, longitude: -99.0188746};
 
 export default function CheckoutModal({
-  perfume,
+  items,
   onClose,
+  onComplete,
 }: {
-  perfume: any;
+  items: CartItem[];
   onClose: () => void;
+  onComplete: () => void;
 }) {
   const [form, setForm] = useState({
     buyer_name: "",
     buyer_phone: "",
-    quantity: 1,
     address: {
       street: "",
       number: "",
@@ -39,6 +41,7 @@ export default function CheckoutModal({
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<any>(null);
   const [error, setError] = useState("");
+  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   useEffect(() => {
     let cancelled = false;
@@ -72,7 +75,12 @@ export default function CheckoutModal({
   }, []);
 
   const normalized = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLocaleLowerCase();
-  const isLocal = useMemo(() => Boolean(businessAddress.city) && normalized(form.address.city) === normalized(businessAddress.city), [businessAddress.city, form.address.city]);
+  const isLocal = useMemo(
+    () => Boolean(businessAddress.city)
+      && normalized(form.address.city) === normalized(businessAddress.city)
+      && (!businessAddress.state || normalized(form.address.state) === normalized(businessAddress.state)),
+    [businessAddress.city, businessAddress.state, form.address.city, form.address.state],
+  );
 
   const updateAddress = (k: string, v: string) =>
     setForm({ ...form, address: { ...form.address, [k]: v } });
@@ -83,10 +91,9 @@ export default function CheckoutModal({
     setError("");
     try {
       const { data } = await api.post("/sales/", {
-        perfume_id: perfume.id,
+        items: items.map((item) => ({ perfume_id: item.perfumeId, quantity: item.quantity })),
         buyer_name: form.buyer_name,
         buyer_phone: form.buyer_phone,
-        quantity: Number(form.quantity),
         address: form.address,
         preferred_delivery_location_id: isLocal ? Number(preferredLocationId) : null,
       });
@@ -118,7 +125,7 @@ export default function CheckoutModal({
           className="glass rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto relative"
         >
           <button
-            onClick={onClose}
+            onClick={() => { if (success) onComplete(); onClose(); }}
             className="absolute top-4 right-4 text-scentia-muted hover:text-scentia-gold"
           >
             <X size={20} />
@@ -147,7 +154,7 @@ export default function CheckoutModal({
                 <p className="text-lg">${success.total.toFixed(2)}</p>
               </div>
               <button
-                onClick={onClose}
+                onClick={() => { onComplete(); onClose(); }}
                 className="mt-6 bg-gradient-to-r from-scentia-gold to-scentia-gold-soft text-black font-semibold px-6 py-2.5 rounded-lg"
               >
                 Cerrar
@@ -159,7 +166,7 @@ export default function CheckoutModal({
                 Finalizar compra
               </h2>
               <p className="text-scentia-muted text-sm mb-5">
-                {perfume.name} · ${perfume.price.toFixed(2)}
+                {items.length} producto{items.length === 1 ? "" : "s"} · ${total.toFixed(2)}
               </p>
 
               {error && (
@@ -169,6 +176,18 @@ export default function CheckoutModal({
               )}
 
               <div className="space-y-3">
+                <div className="rounded-xl border border-scentia-border bg-scentia-card/50 p-3">
+                  <p className="mb-2 text-xs uppercase tracking-widest text-scentia-gold">Tu pedido</p>
+                  {items.map((item) => (
+                    <div key={item.perfumeId} className="flex justify-between gap-3 py-1 text-sm">
+                      <span className="text-scentia-muted">{item.name} × {item.quantity}</span>
+                      <span>${(item.price * item.quantity).toFixed(2)}</span>
+                    </div>
+                  ))}
+                  <div className="mt-2 flex justify-between border-t border-scentia-border pt-2 font-semibold">
+                    <span>Total</span><span className="text-scentia-gold">${total.toFixed(2)}</span>
+                  </div>
+                </div>
                 <input
                   className={input}
                   placeholder="Nombre del comprador"
@@ -183,15 +202,6 @@ export default function CheckoutModal({
                   onChange={(e) => setForm({ ...form, buyer_phone: e.target.value })}
                   required
                 />
-                <input
-                  type="number"
-                  min={1}
-                  max={perfume.stock}
-                  className={input}
-                  value={form.quantity}
-                  onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })}
-                />
-
                 <div className="border-t border-scentia-border pt-3">
                   <p className="text-xs uppercase tracking-widest text-scentia-gold mb-2">
                     Dirección del comprador
@@ -268,7 +278,7 @@ export default function CheckoutModal({
                 disabled={loading || (isLocal && (!preferredLocationId || locations.length === 0))}
                 className="w-full mt-5 bg-gradient-to-r from-scentia-gold to-scentia-gold-soft text-black font-semibold py-2.5 rounded-lg hover:opacity-90 transition disabled:opacity-50"
               >
-                {loading ? "Registrando..." : `Realizar pedido · $${(perfume.price * form.quantity).toFixed(2)}`}
+                {loading ? "Registrando..." : `Realizar pedido · $${total.toFixed(2)}`}
               </button>
             </form>
           )}

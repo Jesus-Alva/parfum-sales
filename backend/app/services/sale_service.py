@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.models.perfume import Perfume
 from app.models.sale import Sale
+from app.models.sale import SaleItem
 from app.models.address import Address
 from app.schemas.sale import SaleCreate
 from app.models.delivery_location import DeliveryLocation
@@ -19,11 +20,21 @@ def generate_folio() -> str:
 
 
 def create_sale(db: Session, payload: SaleCreate) -> Sale:
-    perfume = db.query(Perfume).filter(Perfume.id == payload.perfume_id).first()
-    if not perfume:
-        raise ValueError("Perfume no encontrado")
-    if perfume.stock < payload.quantity:
-        raise ValueError("Stock insuficiente")
+    quantities: dict[int, int] = {}
+    for item in payload.items:
+        quantities[item.perfume_id] = quantities.get(item.perfume_id, 0) + item.quantity
+
+    perfumes = db.query(Perfume).filter(Perfume.id.in_(quantities)).all()
+    perfumes_by_id = {perfume.id: perfume for perfume in perfumes}
+    if len(perfumes_by_id) != len(quantities):
+        raise ValueError("Uno o más perfumes no existen")
+    for perfume_id, quantity in quantities.items():
+        if perfumes_by_id[perfume_id].stock < quantity:
+            raise ValueError(f"Stock insuficiente para {perfumes_by_id[perfume_id].name}")
+
+    first_item = payload.items[0]
+    first_perfume = perfumes_by_id[first_item.perfume_id]
+    total = sum(perfumes_by_id[item.perfume_id].price * item.quantity for item in payload.items)
 
     def normalize(value: str) -> str:
         plain = unicodedata.normalize("NFKD", value or "")
@@ -51,20 +62,25 @@ def create_sale(db: Session, payload: SaleCreate) -> Sale:
 
     sale = Sale(
         folio=generate_folio(),
-        perfume_id=perfume.id,
+        perfume_id=first_perfume.id,
         buyer_name=payload.buyer_name,
         buyer_phone=payload.buyer_phone,
         address_id=address.id,
-        quantity=payload.quantity,
-        unit_price=perfume.price,
-        total=perfume.price * payload.quantity,
+        quantity=sum(quantities.values()),
+        unit_price=first_perfume.price,
+        total=total,
         status="pending_delivery",
         delivery_type="local" if local else "shipping",
         preferred_delivery_location_id=preferred_location.id if preferred_location else None,
     )
 
-    perfume.stock -= payload.quantity
     db.add(sale)
+    db.flush()
+    for item in payload.items:
+        perfume = perfumes_by_id[item.perfume_id]
+        db.add(SaleItem(sale_id=sale.id, perfume_id=perfume.id, quantity=item.quantity, unit_price=perfume.price))
+    for perfume_id, quantity in quantities.items():
+        perfumes_by_id[perfume_id].stock -= quantity
     db.commit()
     db.refresh(sale)
     return sale

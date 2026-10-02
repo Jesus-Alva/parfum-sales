@@ -30,5 +30,19 @@ class Sale(Base):
 
     perfume = relationship("Perfume")
     address = relationship("Address")
+    items = relationship("SaleItem", back_populates="sale", cascade="all, delete-orphan", order_by="SaleItem.id")
     preferred_delivery_location = relationship("DeliveryLocation", foreign_keys=[preferred_delivery_location_id])
     delivery_location = relationship("DeliveryLocation", foreign_keys=[delivery_location_id])
+
+
+class SaleItem(Base):
+    __tablename__ = "sale_items"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    sale_id: Mapped[int] = mapped_column(ForeignKey("sales.id", ondelete="CASCADE"), nullable=False, index=True)
+    perfume_id: Mapped[int] = mapped_column(ForeignKey("perfumes.id"), nullable=False)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    unit_price: Mapped[float] = mapped_column(Float, nullable=False)
+
+    sale = relationship("Sale", back_populates="items")
+    perfume = relationship("Perfume")

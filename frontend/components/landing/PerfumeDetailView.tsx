@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   ShoppingBag,
   Star,
@@ -14,11 +15,15 @@ import {
 import { imageUrl } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import ImageGallery from "@/components/perfumes/ImageGallery";
+import { useCartStore } from "@/store/cartStore";
+import type { CartItem } from "@/store/cartStore";
 import CheckoutModal from "@/components/sales/CheckoutModal";
 
 export default function PerfumeDetailView({ perfume }: { perfume: any }) {
   const router = useRouter();
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
+  const [quickBuyItem, setQuickBuyItem] = useState<CartItem | null>(null);
+  const addToCart = useCartStore((state) => state.add);
 
   // Galería: si tiene imágenes múltiples, usa perfume.images;
   // si no, cae al cover (image_url) como única imagen
@@ -29,12 +34,21 @@ export default function PerfumeDetailView({ perfume }: { perfume: any }) {
         ? [{ id: 0, url: perfume.image_url, position: 0 }]
         : [];
 
-  const handleBuy = () => {
+  const handleAddToCart = () => {
     if (!getToken()) {
       router.push(`/login?next=/perfumes/${perfume.id}`);
       return;
     }
-    setCheckoutOpen(true);
+    addToCart({ perfumeId: perfume.id, name: perfume.name, brand: perfume.brand, imageUrl: perfume.image_url || "", price: perfume.price, stock: perfume.stock, quantity: 1 });
+    setAddedToCart(true);
+  };
+
+  const handleBuyNow = () => {
+    if (!getToken()) {
+      router.push(`/login?next=/perfumes/${perfume.id}`);
+      return;
+    }
+    setQuickBuyItem({ perfumeId: perfume.id, name: perfume.name, brand: perfume.brand, imageUrl: perfume.image_url || "", price: perfume.price, stock: perfume.stock, quantity: 1 });
   };
 
   const inStock = perfume.stock > 0;
@@ -216,22 +230,25 @@ export default function PerfumeDetailView({ perfume }: { perfume: any }) {
 
           {/* CTA comprar */}
           <motion.div variants={fadeUp} className="pt-2">
-            <button
-              onClick={handleBuy}
-              disabled={!inStock}
-              className="w-full group relative overflow-hidden bg-gradient-to-r from-scentia-gold to-scentia-gold-soft text-black font-semibold py-4 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition glow-gold"
-            >
-              <span className="relative z-10 flex items-center justify-center gap-2">
-                <ShoppingBag size={18} />
-                {inStock
-                  ? getToken()
-                    ? "Comprar ahora"
-                    : "Inicia sesión para comprar"
-                  : "Sin stock"}
-              </span>
-              {/* Shimmer */}
-              <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/40 to-transparent" />
-            </button>
+            <div className="grid grid-cols-2 gap-3">
+              <button type="button" onClick={handleBuyNow} disabled={!inStock} className="rounded-xl border border-scentia-gold/50 px-3 py-4 font-semibold text-scentia-gold transition hover:bg-scentia-gold/10 disabled:opacity-40 disabled:cursor-not-allowed">
+                {inStock ? getToken() ? "Comprar ahora" : "Inicia sesión" : "Sin stock"}
+              </button>
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                disabled={!inStock}
+                className="w-full group relative overflow-hidden bg-gradient-to-r from-scentia-gold to-scentia-gold-soft text-black font-semibold py-4 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition glow-gold"
+              >
+                <span className="relative z-10 flex items-center justify-center gap-2">
+                  <ShoppingBag size={18} />
+                  {inStock ? getToken() ? addedToCart ? "Agregar otro" : "Agregar al carrito" : "Inicia sesión" : "Sin stock"}
+                </span>
+                <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+              </button>
+            </div>
+
+            {addedToCart && <Link href="/carrito" className="mt-3 block text-center text-sm text-scentia-gold hover:underline">Ver carrito</Link>}
 
             <p className="text-xs text-scentia-muted text-center mt-3">
               Confirmación inmediata por Telegram · Envío a domicilio
@@ -258,11 +275,7 @@ export default function PerfumeDetailView({ perfume }: { perfume: any }) {
           </motion.div>
         </motion.div>
       </div>
-
-      {/* Modal de checkout */}
-      {checkoutOpen && (
-        <CheckoutModal perfume={perfume} onClose={() => setCheckoutOpen(false)} />
-      )}
+      {quickBuyItem && <CheckoutModal items={[quickBuyItem]} onClose={() => setQuickBuyItem(null)} onComplete={() => undefined} />}
     </>
   );
 }

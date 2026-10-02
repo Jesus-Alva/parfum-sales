@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { api, imageUrl } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import ScrollReveal from "@/components/shared/ScrollReveal";
+import { useCartStore } from "@/store/cartStore";
+import type { CartItem } from "@/store/cartStore";
 import CheckoutModal from "@/components/sales/CheckoutModal";
 import { ShoppingBag, Eye } from "lucide-react";
 import Link from "next/link";
@@ -12,9 +14,11 @@ import Link from "next/link";
 export default function PerfumeShowcase() {
   const router = useRouter();
   const [perfumes, setPerfumes] = useState<any[]>([]);
-  const [selected, setSelected] = useState<any>(null);
+  const [addedMessage, setAddedMessage] = useState("");
+  const [quickBuyItem, setQuickBuyItem] = useState<CartItem | null>(null);
   const [isAuthed, setIsAuthed] = useState(false);
   const [loading, setLoading] = useState(true);
+  const addToCart = useCartStore((state) => state.add);
 
   useEffect(() => {
     setIsAuthed(!!getToken());
@@ -25,13 +29,24 @@ export default function PerfumeShowcase() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleBuy = (e: React.MouseEvent, perfume: any) => {
+  const handleAddToCart = (e: React.MouseEvent, perfume: any) => {
     e.stopPropagation();   // 👈 evita que también navegue al detalle
     if (!isAuthed) {
       router.push(`/login?next=/perfumes/${perfume.id}`);
       return;
     }
-    setSelected(perfume);
+    addToCart({ perfumeId: perfume.id, name: perfume.name, brand: perfume.brand, imageUrl: perfume.image_url || "", price: perfume.price, stock: perfume.stock, quantity: 1 });
+    setAddedMessage(`${perfume.name} se agregó al carrito.`);
+    window.setTimeout(() => setAddedMessage(""), 2200);
+  };
+
+  const handleBuyNow = (e: React.MouseEvent, perfume: any) => {
+    e.stopPropagation();
+    if (!isAuthed) {
+      router.push(`/login?next=/perfumes/${perfume.id}`);
+      return;
+    }
+    setQuickBuyItem({ perfumeId: perfume.id, name: perfume.name, brand: perfume.brand, imageUrl: perfume.image_url || "", price: perfume.price, stock: perfume.stock, quantity: 1 });
   };
 
   const goToDetail = (id: number) => {
@@ -125,13 +140,12 @@ export default function PerfumeShowcase() {
                       {p.stock} disponibles
                     </p>
                   </div>
-                  <button
-                    onClick={(e) => handleBuy(e, p)}   // 👈 e.stopPropagation dentro
-                    className="bg-gradient-to-r from-scentia-gold to-scentia-gold-soft text-black font-semibold px-4 py-2 rounded-lg hover:opacity-90 transition flex items-center gap-2 relative z-20"
-                  >
-                    <ShoppingBag size={16} />
-                    {isAuthed ? "Comprar" : "Regístrate"}
-                  </button>
+                  <div className="flex gap-2 relative z-20">
+                    <button type="button" onClick={(e) => handleBuyNow(e, p)} className="rounded-lg border border-scentia-gold/40 px-3 py-2 text-xs font-semibold text-scentia-gold hover:bg-scentia-gold/10 transition">Comprar</button>
+                    <button type="button" onClick={(e) => handleAddToCart(e, p)} className="bg-gradient-to-r from-scentia-gold to-scentia-gold-soft text-black font-semibold px-3 py-2 rounded-lg hover:opacity-90 transition flex items-center gap-2">
+                      <ShoppingBag size={15} />{isAuthed ? "Agregar" : "Regístrate"}
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -149,9 +163,8 @@ export default function PerfumeShowcase() {
         </div>
       )}
 
-      {selected && (
-        <CheckoutModal perfume={selected} onClose={() => setSelected(null)} />
-      )}
+      {addedMessage && <div role="status" className="fixed bottom-5 right-5 z-40 flex items-center gap-4 rounded-xl border border-scentia-gold/30 bg-scentia-card px-4 py-3 text-sm shadow-xl"><span>{addedMessage}</span><Link href="/carrito" className="shrink-0 text-scentia-gold hover:underline">Ver carrito</Link></div>}
+      {quickBuyItem && <CheckoutModal items={[quickBuyItem]} onClose={() => setQuickBuyItem(null)} onComplete={() => undefined} />}
     </section>
   );
 }

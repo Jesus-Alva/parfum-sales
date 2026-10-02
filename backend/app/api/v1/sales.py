@@ -26,8 +26,10 @@ def register_sale(payload: SaleCreate, db: Session = Depends(get_db)):
     # Enviar notificación de Telegram de forma asíncrona
     notify_new_sale.delay({
         "folio": sale.folio,
-        "perfume_name": sale.perfume.name,
-        "quantity": sale.quantity,
+        "items": [
+            {"name": item.perfume.name, "quantity": item.quantity, "unit_price": item.unit_price}
+            for item in sale.items
+        ],
         "total": sale.total,
         "buyer_name": sale.buyer_name,
         "buyer_phone": sale.buyer_phone,

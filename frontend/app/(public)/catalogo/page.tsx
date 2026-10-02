@@ -4,6 +4,9 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { api, imageUrl } from "@/lib/api";
 import { getToken } from "@/lib/auth";
+import { useCartStore } from "@/store/cartStore";
+import type { CartItem } from "@/store/cartStore";
+import CheckoutModal from "@/components/sales/CheckoutModal";
 import {
     Search,
     SlidersHorizontal,
@@ -50,6 +53,8 @@ export default function CatalogPage() {
     const [loading, setLoading] = useState(true);
     const [showFilters, setShowFilters] = useState(false);
     const [isAuthed, setIsAuthed] = useState(false);
+    const [quickBuyItem, setQuickBuyItem] = useState<CartItem | null>(null);
+    const addToCart = useCartStore((state) => state.add);
 
     // Cargar opciones de filtro una vez
     useEffect(() => {
@@ -89,7 +94,26 @@ export default function CatalogPage() {
 
     const goToDetail = (id: number) => router.push(`/perfumes/${id}`);
 
+    const handleAddToCart = (event: React.MouseEvent, perfume: any) => {
+        event.stopPropagation();
+        if (!isAuthed) {
+            router.push(`/login?next=/perfumes/${perfume.id}`);
+            return;
+        }
+        addToCart({ perfumeId: perfume.id, name: perfume.name, brand: perfume.brand, imageUrl: perfume.image_url || "", price: perfume.price, stock: perfume.stock, quantity: 1 });
+    };
+
+    const handleBuyNow = (event: React.MouseEvent, perfume: any) => {
+        event.stopPropagation();
+        if (!isAuthed) {
+            router.push(`/login?next=/perfumes/${perfume.id}`);
+            return;
+        }
+        setQuickBuyItem({ perfumeId: perfume.id, name: perfume.name, brand: perfume.brand, imageUrl: perfume.image_url || "", price: perfume.price, stock: perfume.stock, quantity: 1 });
+    };
+
     return (
+        <>
         <div className="min-h-screen pt-24 pb-16 px-6">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
@@ -371,6 +395,10 @@ export default function CatalogPage() {
                                                 {p.stock > 0 ? `${p.stock} disp.` : "—"}
                                             </span>
                                         </div>
+                                        <div className="mt-4 flex gap-2">
+                                            <button type="button" disabled={p.stock <= 0} onClick={(event) => handleBuyNow(event, p)} className="flex-1 rounded-lg border border-scentia-gold/40 px-2 py-2 text-sm text-scentia-gold transition hover:bg-scentia-gold/10 disabled:opacity-40">Comprar</button>
+                                            <button type="button" disabled={p.stock <= 0} onClick={(event) => handleAddToCart(event, p)} className="flex-1 rounded-lg bg-gradient-to-r from-scentia-gold to-scentia-gold-soft px-2 py-2 text-sm font-semibold text-black transition hover:opacity-90 disabled:opacity-40">Agregar al carrito</button>
+                                        </div>
                                     </motion.div>
                                 ))}
                             </div>
@@ -379,6 +407,8 @@ export default function CatalogPage() {
                 </div>
             </div>
         </div>
+        {quickBuyItem && <CheckoutModal items={[quickBuyItem]} onClose={() => setQuickBuyItem(null)} onComplete={() => undefined} />}
+        </>
     );
 }
 

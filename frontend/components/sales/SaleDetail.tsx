@@ -10,7 +10,7 @@ export default function SaleDetail({ sale }: { sale: any }) {
       <div className="grid grid-cols-2 gap-4 text-sm mb-6">
         <Info label="Comprador" value={sale.buyer_name} />
         <Info label="Teléfono" value={sale.buyer_phone} />
-        <Info label="Cantidad" value={sale.quantity} />
+        <Info label="Productos" value={sale.items?.map((item: any) => `${item.perfume.name} × ${item.quantity}`).join(", ") || `${sale.perfume?.name || "Perfume"} × ${sale.quantity}`} />
         <Info label="Total" value={`$${sale.total.toFixed(2)}`} />
         <Info label="Estado" value={sale.status} />
         <Info label="Fecha" value={new Date(sale.created_at).toLocaleString()} />

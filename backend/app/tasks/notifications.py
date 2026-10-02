@@ -7,11 +7,15 @@ from app.services.telegram_service import send_telegram_message
 
 @celery_app.task(name="notify_new_sale")
 def notify_new_sale(sale_data: dict):
+    items = sale_data.get("items") or [{
+        "name": sale_data.get("perfume_name", "Perfume"),
+        "quantity": sale_data.get("quantity", 1),
+    }]
+    items_text = "\n".join(f"• {item['name']} × {item['quantity']}" for item in items)
     text = (
         "🌸 <b>Nueva venta registrada en Scentia</b>\n\n"
         f"<b>Folio:</b> {sale_data['folio']}\n"
-        f"<b>Perfume:</b> {sale_data['perfume_name']}\n"
-        f"<b>Cantidad:</b> {sale_data['quantity']}\n"
+        f"<b>Productos:</b>\n{items_text}\n"
         f"<b>Total:</b> ${sale_data['total']:.2f}\n\n"
         f"<b>Comprador:</b> {sale_data['buyer_name']}\n"
         f"<b>Teléfono:</b> {sale_data['buyer_phone']}\n"
