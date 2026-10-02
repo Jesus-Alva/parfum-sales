@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { api } from "@/lib/api";
+import { getToken } from "@/lib/auth";
 import InteractiveMap from "@/components/shared/InteractiveMap";
 import DeliveryLocationsMap from "@/components/shared/DeliveryLocationsMap";
 
@@ -41,6 +42,14 @@ export default function CheckoutModal({
 
   useEffect(() => {
     let cancelled = false;
+    if (getToken()) {
+      api.get("/users/me")
+        .then(({ data }) => {
+          if (cancelled || !data.full_name) return;
+          setForm((prev) => prev.buyer_name.trim() ? prev : { ...prev, buyer_name: data.full_name });
+        })
+        .catch(() => undefined);
+    }
     Promise.all([api.get("/delivery-locations/"), api.get("/delivery-locations/settings")])
       .then(([locationResponse, settingsResponse]) => {
         if (cancelled) return;
