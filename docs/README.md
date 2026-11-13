@@ -37,6 +37,23 @@ docker compose exec backend alembic upgrade head
    `https://api.telegram.org/bot<TOKEN>/getUpdates`
 4. Copia el chat_id a `TELEGRAM_CHAT_ID`
 
+## 🔑 Recuperación de contraseña
+
+El formulario de inicio de sesión permite solicitar un enlace de un solo uso. Los enlaces expiran en 30 minutos. Para habilitar el envío, configura estas variables en `.env` y recrea el backend:
+
+```env
+FRONTEND_BASE_URL=http://localhost:3005
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USERNAME=usuario_smtp
+SMTP_PASSWORD=contraseña_smtp
+SMTP_FROM_EMAIL=cuentas@example.com
+SMTP_FROM_NAME=Scentia
+SMTP_USE_TLS=true
+```
+
+`SMTP_USERNAME` y `SMTP_PASSWORD` pueden dejarse vacíos si el servidor SMTP no requiere autenticación. La contraseña nueva debe tener entre 8 y 72 caracteres y no superar el límite de 72 bytes de bcrypt. La migración de la tabla de tokens debe aplicarse con `docker compose exec backend alembic upgrade head`.
+
 ## 📍 Entregas y pedidos
 
 Configura `BUSINESS_CITY` y `BUSINESS_STATE` en el archivo `.env` con el municipio y estado de la sede. Las compras con esos datos se mostrarán como entrega local y ofrecerán los puntos activos registrados por el administrador; las demás se registrarán para envío por paquetería.

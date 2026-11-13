@@ -18,7 +18,16 @@ class Settings(BaseSettings):
     BUSINESS_CITY: str = ""
     BUSINESS_STATE: str = ""
 
-    BACKEND_CORS_ORIGINS: str = "http://localhost:3000"
+    BACKEND_CORS_ORIGINS: str = "http://localhost:3005"
+
+    FRONTEND_BASE_URL: str = "http://localhost:3005"
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_EMAIL: str = ""
+    SMTP_FROM_NAME: str = "Scentia"
+    SMTP_USE_TLS: bool = True
 
 # ── Uploads ────────────────────────────
     UPLOAD_DIR: str = "/app/uploads"

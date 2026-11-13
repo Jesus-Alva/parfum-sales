@@ -80,6 +80,12 @@ function LoginForm() {
         className="w-full bg-scentia-card border border-scentia-border rounded-lg px-4 py-2 mb-6 focus:outline-none focus:border-scentia-gold"
       />
 
+      <div className="-mt-4 mb-5 text-right">
+        <a href="/recuperar-contrasena" className="text-xs text-scentia-gold hover:underline">
+          ¿Olvidaste tu contraseña?
+        </a>
+      </div>
+
       <button
         disabled={loading}
         className="w-full bg-gradient-to-r from-scentia-gold to-scentia-gold-soft text-black font-semibold py-2.5 rounded-lg hover:opacity-90 transition disabled:opacity-50"

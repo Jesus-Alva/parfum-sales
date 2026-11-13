@@ -76,7 +76,7 @@ services:
       - ./backend/uploads:/app/uploads  
       - ./backups:/app/backups
     ports:
-      - "8000:8000"
+      - "8005:8000"
     networks:
       - scentia_net
 
@@ -125,7 +125,7 @@ services:
       - WATCHPACK_POLLING=true
       - CHOKIDAR_USEPOLLING=true
     ports:
-      - "3000:3000"
+      - "3005:3000"
     volumes:
       - ./frontend:/app
       - /app/node_modules        # 👈 CRÍTICO: preserva node_modules del contenedor
