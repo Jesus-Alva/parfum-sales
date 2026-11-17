@@ -2,13 +2,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, SprayCan, ShoppingBag, BarChart3, MapPin, PackageSearch, Database } from "lucide-react";
+import { LayoutDashboard, SprayCan, ShoppingBag, BarChart3, MapPin, PackageSearch, Database, Tags } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isAdmin as isAdminFn } from "@/lib/auth";
 
 const ALL_ITEMS = [
   { href: "/dashboard", label: "Panel", icon: LayoutDashboard, adminOnly: false },
   { href: "/perfumes", label: "Perfumes", icon: SprayCan, adminOnly: true },
+  { href: "/brands", label: "Marcas", icon: Tags, adminOnly: true },
   { href: "/sales", label: "Ventas", icon: ShoppingBag, adminOnly: true },
   { href: "/orders", label: "Pedidos", icon: PackageSearch, adminOnly: true },
   { href: "/delivery-locations", label: "Ubicaciones", icon: MapPin, adminOnly: true },

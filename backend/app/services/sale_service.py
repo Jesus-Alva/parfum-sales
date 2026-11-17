@@ -34,7 +34,7 @@ def create_sale(db: Session, payload: SaleCreate, user_id: int | None = None) ->
 
     first_item = payload.items[0]
     first_perfume = perfumes_by_id[first_item.perfume_id]
-    total = sum(perfumes_by_id[item.perfume_id].price * item.quantity for item in payload.items)
+    total = sum(perfumes_by_id[item.perfume_id].discounted_price * item.quantity for item in payload.items)
 
     def normalize(value: str) -> str:
         plain = unicodedata.normalize("NFKD", value or "")
@@ -68,7 +68,7 @@ def create_sale(db: Session, payload: SaleCreate, user_id: int | None = None) ->
         address_id=address.id,
         user_id=user_id,
         quantity=sum(quantities.values()),
-        unit_price=first_perfume.price,
+        unit_price=first_perfume.discounted_price,
         total=total,
         status="pending_delivery",
         delivery_type="local" if local else "shipping",
@@ -79,7 +79,7 @@ def create_sale(db: Session, payload: SaleCreate, user_id: int | None = None) ->
     db.flush()
     for item in payload.items:
         perfume = perfumes_by_id[item.perfume_id]
-        db.add(SaleItem(sale_id=sale.id, perfume_id=perfume.id, quantity=item.quantity, unit_price=perfume.price))
+        db.add(SaleItem(sale_id=sale.id, perfume_id=perfume.id, quantity=item.quantity, unit_price=perfume.discounted_price))
     for perfume_id, quantity in quantities.items():
         perfumes_by_id[perfume_id].stock -= quantity
     db.commit()

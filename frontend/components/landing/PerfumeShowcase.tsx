@@ -8,6 +8,8 @@ import ScrollReveal from "@/components/shared/ScrollReveal";
 import { useCartStore } from "@/store/cartStore";
 import type { CartItem } from "@/store/cartStore";
 import CheckoutModal from "@/components/sales/CheckoutModal";
+import BrandLabel from "@/components/perfumes/BrandLabel";
+import PerfumePrice from "@/components/perfumes/PerfumePrice";
 import { ShoppingBag, Eye } from "lucide-react";
 import Link from "next/link";
 
@@ -42,7 +44,7 @@ export default function PerfumeShowcase() {
       router.push(`/login?next=/perfumes/${perfume.id}`);
       return;
     }
-    addToCart({ perfumeId: perfume.id, name: perfume.name, brand: perfume.brand, imageUrl: perfume.image_url || "", price: perfume.price, stock: perfume.stock, quantity: 1 });
+    addToCart({ perfumeId: perfume.id, name: perfume.name, brand: perfume.brand, imageUrl: perfume.image_url || "", price: Number(perfume.discounted_price ?? perfume.price), stock: perfume.stock, quantity: 1 });
     setAddedMessage(`${perfume.name} se agregó al carrito.`);
     window.setTimeout(() => setAddedMessage(""), 2200);
   };
@@ -54,7 +56,7 @@ export default function PerfumeShowcase() {
       router.push(`/login?next=/perfumes/${perfume.id}`);
       return;
     }
-    setQuickBuyItem({ perfumeId: perfume.id, name: perfume.name, brand: perfume.brand, imageUrl: perfume.image_url || "", price: perfume.price, stock: perfume.stock, quantity: 1 });
+    setQuickBuyItem({ perfumeId: perfume.id, name: perfume.name, brand: perfume.brand, imageUrl: perfume.image_url || "", price: Number(perfume.discounted_price ?? perfume.price), stock: perfume.stock, quantity: 1 });
   };
 
   const goToDetail = (id: number) => {
@@ -132,7 +134,7 @@ export default function PerfumeShowcase() {
                 </div>
 
                 <p className="text-xs uppercase tracking-widest text-scentia-gold mb-1">
-                  {p.brand}
+                  <BrandLabel name={p.brand} logoUrl={p.brand_logo_url} />
                 </p>
                 <h3 className="font-display text-2xl mb-1">{p.name}</h3>
                 <p className="text-sm text-scentia-muted mb-4 line-clamp-2">
@@ -141,9 +143,7 @@ export default function PerfumeShowcase() {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-2xl font-semibold text-gradient-gold">
-                      ${p.price.toFixed(2)}
-                    </span>
+                    <PerfumePrice perfume={p} />
                     <p className="text-xs text-scentia-muted mt-1">
                       {p.stock} disponibles
                     </p>

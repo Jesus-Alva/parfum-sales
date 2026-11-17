@@ -19,7 +19,7 @@ ALLOWED_EXT = {
 }
 
 
-async def _save_single(file: UploadFile) -> dict:
+async def _save_single(file: UploadFile, folder_name: str = "perfumes") -> dict:
     if file.content_type not in settings.allowed_image_types:
         raise HTTPException(400, f"Tipo no permitido: {file.content_type}")
 
@@ -30,14 +30,14 @@ async def _save_single(file: UploadFile) -> dict:
 
     ext = ALLOWED_EXT.get(file.content_type, ".jpg")
     filename = f"{uuid.uuid4().hex}{ext}"
-    folder = Path(settings.UPLOAD_DIR) / "perfumes"
+    folder = Path(settings.UPLOAD_DIR) / folder_name
     folder.mkdir(parents=True, exist_ok=True)
     filepath = folder / filename
     with open(filepath, "wb") as f:
         f.write(contents)
 
     return {
-        "url": f"/uploads/perfumes/{filename}",
+        "url": f"/uploads/{folder_name}/{filename}",
         "filename": filename,
         "size": len(contents),
     }
@@ -50,6 +50,14 @@ async def upload_image(
 ):
     """Sube UNA imagen (compatibilidad)."""
     return await _save_single(file)
+
+
+@router.post("/brand-logo")
+async def upload_brand_logo(
+    file: UploadFile = File(...),
+    _: User = Depends(get_current_user),
+):
+    return await _save_single(file, "brands")
 
 
 @router.post("/images")

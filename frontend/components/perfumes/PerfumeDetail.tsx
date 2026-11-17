@@ -1,6 +1,8 @@
 "use client";
 import { imageUrl } from "@/lib/api";
 import ImageGallery from "./ImageGallery";
+import BrandLabel from "@/components/perfumes/BrandLabel";
+import PerfumePrice from "@/components/perfumes/PerfumePrice";
 
 export default function PerfumeDetail({ perfume }: { perfume: any }) {
   const images = perfume.images?.length
@@ -17,7 +19,7 @@ export default function PerfumeDetail({ perfume }: { perfume: any }) {
 
       <div>
         <p className="text-xs uppercase tracking-widest text-scentia-gold mb-2">
-          {perfume.brand}
+          <BrandLabel name={perfume.brand} logoUrl={perfume.brand_logo_url} />
         </p>
         <h1 className="font-display text-4xl mb-4">{perfume.name}</h1>
         <p className="text-scentia-muted mb-6">{perfume.description}</p>
@@ -27,8 +29,8 @@ export default function PerfumeDetail({ perfume }: { perfume: any }) {
           <div><span className="text-scentia-muted">Familia:</span> {perfume.family}</div>
           <div><span className="text-scentia-muted">Volumen:</span> {perfume.volume_ml} ml</div>
           <div><span className="text-scentia-muted">Stock:</span> {perfume.stock}</div>
-          <div className="col-span-2 text-2xl text-gradient-gold font-semibold">
-            ${perfume.price.toFixed(2)}
+          <div className="col-span-2">
+            <PerfumePrice perfume={perfume} />
           </div>
         </div>
       </div>

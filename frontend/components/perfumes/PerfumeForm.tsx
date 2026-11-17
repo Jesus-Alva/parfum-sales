@@ -1,12 +1,13 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { api, uploadImages } from "@/lib/api";
 import MultiImageUpload from "./MultiImageUpload";
 
 const empty = {
-  name: "", brand: "", description: "", gender: "unisex",
-  family: "", notes: "", volume_ml: 100, price: 0, cost: 0,
+  name: "", brand: "", brand_id: "", description: "", gender: "unisex",
+  family: "", notes: "", volume_ml: 100, price: 0, discount_percent: 0, cost: 0,
   stock: 0, image_url: "",
   tipo: "", perfil: "", estilo: "", uso: "", presentacion: "",
 };
@@ -23,6 +24,13 @@ export default function PerfumeForm({ perfume }: { perfume?: any }) {
   const [coverUrl, setCoverUrl] = useState<string>(perfume?.image_url || "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [brands, setBrands] = useState<{ id: number; name: string }[]>([]);
+
+  useEffect(() => {
+    api.get("/brands/")
+      .then((response) => setBrands(response.data))
+      .catch(() => setError("No se pudieron cargar las marcas."));
+  }, []);
 
   const update = (k: string, v: any) => setForm({ ...form, [k]: v });
 
@@ -57,10 +65,13 @@ export default function PerfumeForm({ perfume }: { perfume?: any }) {
 
       const payload = {
         ...form,
+        brand_id: Number(form.brand_id),
+        brand: brands.find((brand) => brand.id === Number(form.brand_id))?.name || form.brand,
         image_url: finalCover,
         images: allUrls,
         volume_ml: Number(form.volume_ml),
         price: Number(form.price),
+        discount_percent: Number(form.discount_percent || 0),
         cost: Number(form.cost),
         stock: Number(form.stock),
       };
@@ -92,7 +103,11 @@ export default function PerfumeForm({ perfume }: { perfume?: any }) {
         </div>
         <div>
           <label className="block text-sm mb-1">Marca</label>
-          <input className={input} value={form.brand} onChange={(e) => update("brand", e.target.value)} required />
+          <select className={input} value={form.brand_id ?? ""} onChange={(e) => update("brand_id", e.target.value)} required>
+            <option value="">Selecciona una marca</option>
+            {brands.map((brand) => <option key={brand.id} value={brand.id}>{brand.name}</option>)}
+          </select>
+          {brands.length === 0 && <Link href="/brands" className="mt-1 inline-block text-xs text-scentia-gold hover:underline">Registra primero una marca</Link>}
         </div>
         <div>
           <label className="block text-sm mb-1">Género</label>
@@ -121,6 +136,11 @@ export default function PerfumeForm({ perfume }: { perfume?: any }) {
         <div>
           <label className="block text-sm mb-1">Precio</label>
           <input type="number" step="0.01" className={input} value={form.price} onChange={(e) => update("price", e.target.value)} required />
+        </div>
+        <div>
+          <label className="block text-sm mb-1">Descuento (%)</label>
+          <input type="number" min="0" max="100" step="1" className={input} value={form.discount_percent ?? 0} onChange={(e) => update("discount_percent", e.target.value)} />
+          <p className="mt-1 text-xs text-scentia-muted">Usa 0 si no tiene descuento.</p>
         </div>
         <div className="md:col-span-2">
           <label className="block text-sm mb-1">Notas</label>

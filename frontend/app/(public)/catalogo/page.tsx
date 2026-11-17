@@ -7,6 +7,8 @@ import { getToken } from "@/lib/auth";
 import { useCartStore } from "@/store/cartStore";
 import type { CartItem } from "@/store/cartStore";
 import CheckoutModal from "@/components/sales/CheckoutModal";
+import BrandLabel from "@/components/perfumes/BrandLabel";
+import PerfumePrice from "@/components/perfumes/PerfumePrice";
 import {
     Search,
     SlidersHorizontal,
@@ -107,7 +109,7 @@ export default function CatalogPage() {
             router.push(`/login?next=/perfumes/${perfume.id}`);
             return;
         }
-        addToCart({ perfumeId: perfume.id, name: perfume.name, brand: perfume.brand, imageUrl: perfume.image_url || "", price: perfume.price, stock: perfume.stock, quantity: 1 });
+        addToCart({ perfumeId: perfume.id, name: perfume.name, brand: perfume.brand, imageUrl: perfume.image_url || "", price: Number(perfume.discounted_price ?? perfume.price), stock: perfume.stock, quantity: 1 });
     };
 
     const handleBuyNow = (event: React.MouseEvent, perfume: any) => {
@@ -117,7 +119,7 @@ export default function CatalogPage() {
             router.push(`/login?next=/perfumes/${perfume.id}`);
             return;
         }
-        setQuickBuyItem({ perfumeId: perfume.id, name: perfume.name, brand: perfume.brand, imageUrl: perfume.image_url || "", price: perfume.price, stock: perfume.stock, quantity: 1 });
+        setQuickBuyItem({ perfumeId: perfume.id, name: perfume.name, brand: perfume.brand, imageUrl: perfume.image_url || "", price: Number(perfume.discounted_price ?? perfume.price), stock: perfume.stock, quantity: 1 });
     };
 
     return (
@@ -388,7 +390,7 @@ export default function CatalogPage() {
                                         </div>
 
                                         <p className="text-xs uppercase tracking-widest text-scentia-gold mb-1">
-                                            {p.brand}
+                                            <BrandLabel name={p.brand} logoUrl={p.brand_logo_url} />
                                         </p>
                                         <h3 className="font-display text-xl mb-1">{p.name}</h3>
                                         <p className="text-xs text-scentia-muted mb-3 line-clamp-1">
@@ -396,9 +398,7 @@ export default function CatalogPage() {
                                         </p>
 
                                         <div className="flex items-center justify-between">
-                                            <span className="text-lg font-semibold text-gradient-gold">
-                                                ${p.price.toFixed(2)}
-                                            </span>
+                                            <PerfumePrice perfume={p} />
                                             <span className="text-xs text-scentia-muted">
                                                 {p.stock > 0 ? `${p.stock} disp.` : "—"}
                                             </span>

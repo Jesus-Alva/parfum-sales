@@ -4,6 +4,7 @@ import { FormEvent, Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
+import { Eye, EyeOff } from "lucide-react";
 import { api } from "@/lib/api";
 
 function ResetPasswordForm() {
@@ -11,9 +12,13 @@ function ResetPasswordForm() {
   const token = searchParams.get("token") || "";
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
+  const passwordsMismatch = confirmPassword.length > 0 && password !== confirmPassword;
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -56,31 +61,65 @@ function ResetPasswordForm() {
       ) : (
         <>
           <label htmlFor="new-password" className="block text-sm mb-1">Nueva contraseña</label>
-          <input
-            id="new-password"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            autoComplete="new-password"
-            minLength={8}
-            maxLength={72}
-            required
-            className="w-full bg-scentia-card border border-scentia-border rounded-lg px-4 py-2 mb-4 focus:outline-none focus:border-scentia-gold"
-          />
+          <div className="relative mb-4">
+            <input
+              id="new-password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete="new-password"
+              minLength={8}
+              maxLength={72}
+              required
+              className="w-full bg-scentia-card border border-scentia-border rounded-lg px-4 py-2 pr-12 focus:outline-none focus:border-scentia-gold"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((visible) => !visible)}
+              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+              aria-pressed={showPassword}
+              className="absolute inset-y-0 right-0 flex items-center px-4 text-scentia-muted hover:text-scentia-gold"
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
           <label htmlFor="confirm-password" className="block text-sm mb-1">Confirma la contraseña</label>
-          <input
-            id="confirm-password"
-            type="password"
-            value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            autoComplete="new-password"
-            minLength={8}
-            maxLength={72}
-            required
-            className="w-full bg-scentia-card border border-scentia-border rounded-lg px-4 py-2 mb-6 focus:outline-none focus:border-scentia-gold"
-          />
+          <div className="relative">
+            <input
+              id="confirm-password"
+              type={showConfirmPassword ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              autoComplete="new-password"
+              minLength={8}
+              maxLength={72}
+              required
+              aria-invalid={passwordsMismatch}
+              aria-describedby={confirmPassword ? "password-match-status" : undefined}
+              className={`w-full bg-scentia-card border rounded-lg px-4 py-2 pr-12 focus:outline-none focus:border-scentia-gold ${passwordsMismatch ? "border-red-500/70" : passwordsMatch ? "border-emerald-500/70" : "border-scentia-border"}`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword((visible) => !visible)}
+              aria-label={showConfirmPassword ? "Ocultar confirmación de contraseña" : "Mostrar confirmación de contraseña"}
+              aria-pressed={showConfirmPassword}
+              className="absolute inset-y-0 right-0 flex items-center px-4 text-scentia-muted hover:text-scentia-gold"
+            >
+              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+          {confirmPassword && (
+            <p
+              id="password-match-status"
+              aria-live="polite"
+              className={`mt-2 mb-6 text-xs ${passwordsMatch ? "text-emerald-300" : "text-red-300"}`}
+            >
+              {passwordsMatch ? "Las contraseñas coinciden." : "Las contraseñas no coinciden."}
+            </p>
+          )}
+          {!confirmPassword && <div className="mb-6" />}
           <button
-            disabled={loading}
+            disabled={loading || passwordsMismatch}
             className="w-full bg-gradient-to-r from-scentia-gold to-scentia-gold-soft text-black font-semibold py-2.5 rounded-lg hover:opacity-90 transition disabled:opacity-50"
           >
             {loading ? "Actualizando..." : "Cambiar contraseña"}

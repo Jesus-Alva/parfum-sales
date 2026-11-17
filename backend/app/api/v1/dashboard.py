@@ -53,8 +53,10 @@ def costs(db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
             "name": p.name,
             "brand": p.brand,
             "cost": p.cost,
-            "price": p.price,
-            "profit": p.price - p.cost,
+            "price": p.discounted_price,
+            "original_price": p.price,
+            "discount_percent": p.discount_percent,
+            "profit": p.discounted_price - p.cost,
         }
         for p in perfumes
     ]

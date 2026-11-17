@@ -9,6 +9,7 @@ const ADMIN_PATTERNS = [
   /^\/orders(\/|$)/,
   /^\/delivery-locations(\/|$)/,
   /^\/perfumes\/?$/,              // solo la lista del panel
+  /^\/brands(\/|$)/,
   /^\/perfumes\/new(\/|$)/,
   /^\/perfumes\/\d+\/edit(\/|$)/,
 ];

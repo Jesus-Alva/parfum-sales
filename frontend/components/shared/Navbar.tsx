@@ -109,7 +109,7 @@ export default function Navbar() {
               whileHover={{ scale: 1.05 }}
               className="font-display text-2xl md:text-3xl text-gradient-gold block"
             >
-              Scentia
+              ScentiA
             </motion.span>
             <motion.span
               className="absolute -bottom-1 left-0 h-[2px] bg-gradient-to-r from-scentia-gold to-transparent"

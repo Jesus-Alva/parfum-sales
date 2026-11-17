@@ -38,6 +38,15 @@ export const uploadImage = async (file: File): Promise<string> => {
   return data.url;
 };
 
+export const uploadBrandLogo = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append("file", file);
+  const { data } = await api.post("/uploads/brand-logo", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data.url;
+};
+
 export const uploadImages = async (files: File[]): Promise<string[]> => {
   if (files.length === 0) return [];
   if (files.length === 1) return [await uploadImage(files[0])];

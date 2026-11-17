@@ -18,6 +18,8 @@ import ImageGallery from "@/components/perfumes/ImageGallery";
 import { useCartStore } from "@/store/cartStore";
 import type { CartItem } from "@/store/cartStore";
 import CheckoutModal from "@/components/sales/CheckoutModal";
+import BrandLabel from "@/components/perfumes/BrandLabel";
+import PerfumePrice from "@/components/perfumes/PerfumePrice";
 
 export default function PerfumeDetailView({ perfume }: { perfume: any }) {
   const router = useRouter();
@@ -39,7 +41,7 @@ export default function PerfumeDetailView({ perfume }: { perfume: any }) {
       router.push(`/login?next=/perfumes/${perfume.id}`);
       return;
     }
-    addToCart({ perfumeId: perfume.id, name: perfume.name, brand: perfume.brand, imageUrl: perfume.image_url || "", price: perfume.price, stock: perfume.stock, quantity: 1 });
+    addToCart({ perfumeId: perfume.id, name: perfume.name, brand: perfume.brand, imageUrl: perfume.image_url || "", price: Number(perfume.discounted_price ?? perfume.price), stock: perfume.stock, quantity: 1 });
     setAddedToCart(true);
   };
 
@@ -48,7 +50,7 @@ export default function PerfumeDetailView({ perfume }: { perfume: any }) {
       router.push(`/login?next=/perfumes/${perfume.id}`);
       return;
     }
-    setQuickBuyItem({ perfumeId: perfume.id, name: perfume.name, brand: perfume.brand, imageUrl: perfume.image_url || "", price: perfume.price, stock: perfume.stock, quantity: 1 });
+    setQuickBuyItem({ perfumeId: perfume.id, name: perfume.name, brand: perfume.brand, imageUrl: perfume.image_url || "", price: Number(perfume.discounted_price ?? perfume.price), stock: perfume.stock, quantity: 1 });
   };
 
   const inStock = perfume.stock > 0;
@@ -103,8 +105,11 @@ export default function PerfumeDetailView({ perfume }: { perfume: any }) {
           {/* Marca + Título */}
           <motion.div variants={fadeUp}>
             <p className="text-xs uppercase tracking-[0.3em] text-scentia-gold mb-3 flex items-center gap-2">
-              <Sparkles size={12} />
-              {perfume.brand}
+              {perfume.brand_logo_url ? (
+                <BrandLabel name={perfume.brand} logoUrl={perfume.brand_logo_url} large />
+              ) : (
+                <><Sparkles size={12} />{perfume.brand}</>
+              )}
             </p>
             <h1 className="font-display text-4xl md:text-5xl leading-tight mb-2">
               {perfume.name}
@@ -128,10 +133,8 @@ export default function PerfumeDetailView({ perfume }: { perfume: any }) {
           </motion.div>
 
           {/* Precio */}
-          <motion.div variants={fadeUp} className="flex items-baseline gap-3">
-            <span className="font-display text-4xl text-gradient-gold">
-              ${perfume.price.toFixed(2)}
-            </span>
+          <motion.div variants={fadeUp} className="flex flex-wrap items-baseline gap-3">
+            <PerfumePrice perfume={perfume} large />
             <span className="text-sm text-scentia-muted">
               {perfume.volume_ml} ml
             </span>

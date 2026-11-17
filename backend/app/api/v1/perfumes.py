@@ -6,6 +6,7 @@ from typing import Optional
 from app.database import get_db
 from app.api.deps import get_current_user, get_current_admin
 from app.models.perfume import Perfume
+from app.models.brand import Brand
 from app.models.perfume_image import PerfumeImage
 from app.models.user import User
 from app.schemas.perfume import PerfumeCreate, PerfumeUpdate, PerfumeOut
@@ -43,6 +44,7 @@ def list_perfumes(
     db: Session = Depends(get_db),
 ):
     q = db.query(Perfume)
+    sale_price = Perfume.price * (1 - Perfume.discount_percent / 100.0)
 
     if search:
         term = f"%{search}%"
@@ -69,19 +71,19 @@ def list_perfumes(
         q = q.filter(Perfume.tipo == tipo)
 
     if min_price is not None:
-        q = q.filter(Perfume.price >= min_price)
+        q = q.filter(sale_price >= min_price)
 
     if max_price is not None:
-        q = q.filter(Perfume.price <= max_price)
+        q = q.filter(sale_price <= max_price)
 
     if in_stock:
         q = q.filter(Perfume.stock > 0)
 
     # Ordenamiento
     if sort_by == "price_asc":
-        q = q.order_by(Perfume.price.asc())
+        q = q.order_by(sale_price.asc())
     elif sort_by == "price_desc":
-        q = q.order_by(Perfume.price.desc())
+        q = q.order_by(sale_price.desc())
     elif sort_by == "name":
         q = q.order_by(Perfume.name.asc())
     else:
@@ -97,7 +99,8 @@ def filter_options(db: Session = Depends(get_db)):
     families = [r[0] for r in db.query(Perfume.family).distinct().all() if r[0]]
     tipos = [r[0] for r in db.query(Perfume.tipo).distinct().all() if r[0]]
 
-    price_range = db.query(func.min(Perfume.price), func.max(Perfume.price)).first()
+    sale_price = Perfume.price * (1 - Perfume.discount_percent / 100.0)
+    price_range = db.query(func.min(sale_price), func.max(sale_price)).first()
 
     return {
         "brands": sorted(brands),
@@ -123,6 +126,11 @@ def create_perfume(
     _: User = Depends(get_current_admin),
 ):
     data = payload.model_dump(exclude={"images"})
+    if payload.brand_id is not None:
+        brand = db.query(Brand).filter(Brand.id == payload.brand_id).first()
+        if not brand:
+            raise HTTPException(422, "La marca seleccionada no existe")
+        data["brand"] = brand.name
     perfume = Perfume(**data)
     db.add(perfume)
     db.flush()  # para tener el id
@@ -152,6 +160,11 @@ def update_perfume(
         raise HTTPException(404, "Perfume no encontrado")
 
     data = payload.model_dump(exclude_unset=True, exclude={"images"})
+    if "brand_id" in data and data["brand_id"] is not None:
+        brand = db.query(Brand).filter(Brand.id == data["brand_id"]).first()
+        if not brand:
+            raise HTTPException(422, "La marca seleccionada no existe")
+        data["brand"] = brand.name
     for k, v in data.items():
         setattr(p, k, v)
 

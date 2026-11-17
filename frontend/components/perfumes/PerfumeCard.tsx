@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Pencil, Trash2 } from "lucide-react";
 import { api, imageUrl } from "@/lib/api";
+import BrandLabel from "@/components/perfumes/BrandLabel";
+import PerfumePrice from "@/components/perfumes/PerfumePrice";
 
 export default function PerfumeCard({
   perfume,
@@ -69,16 +71,14 @@ export default function PerfumeCard({
 
       {/* Info */}
       <p className="text-xs uppercase tracking-widest text-scentia-gold">
-        {perfume.brand}
+        <BrandLabel name={perfume.brand} logoUrl={perfume.brand_logo_url} />
       </p>
       <h3 className="font-display text-xl mb-1">{perfume.name}</h3>
       <p className="text-xs text-scentia-muted mb-3">
         {perfume.gender} · {perfume.volume_ml}ml · stock {perfume.stock}
       </p>
       <div className="flex items-center justify-between">
-        <span className="text-lg font-semibold text-gradient-gold">
-          ${perfume.price.toFixed(2)}
-        </span>
+        <PerfumePrice perfume={perfume} />
       </div>
     </motion.div>
   );
