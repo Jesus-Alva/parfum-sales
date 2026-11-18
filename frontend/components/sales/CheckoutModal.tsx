@@ -10,6 +10,7 @@ import DeliveryLocationsMap from "@/components/shared/DeliveryLocationsMap";
 import type { CartItem } from "@/store/cartStore";
 
 const BUSINESS_MAP_CENTER = { latitude: 19.6681961, longitude: -99.0188746};
+const DELIVERY_DAY_LABELS: Record<string, string> = { monday: "lunes", tuesday: "martes", wednesday: "miércoles", thursday: "jueves", friday: "viernes", saturday: "sábado", sunday: "domingo" };
 
 export default function CheckoutModal({
   items,
@@ -155,13 +156,14 @@ export default function CheckoutModal({
                 ¡Pedido recibido!
               </h2>
               <p className="text-scentia-muted text-sm mb-4">
-                {success.delivery_type === "local" ? "Notificamos al equipo. Te confirmaremos por Telegram el lugar y horario de entrega." : "Notificamos al equipo para preparar la entrega del pedido."}
+                {success.delivery_type === "local" ? "Notificamos al equipo para preparar tu entrega en el punto seleccionado y su horario habitual." : "Notificamos al equipo para preparar la entrega del pedido."}
               </p>
               <div className="bg-scentia-card border border-scentia-border rounded-xl p-4 text-left">
                 <p className="text-xs text-scentia-muted">Folio</p>
                 <p className="font-mono text-scentia-gold text-lg mb-2">{success.folio}</p>
                 <p className="text-xs text-scentia-muted">Total</p>
                 <p className="text-lg">${success.total.toFixed(2)}</p>
+                {success.delivery_type === "local" && success.preferred_delivery_location && <div className="mt-3 border-t border-scentia-border pt-3"><p className="text-xs text-scentia-muted">Punto y horario habitual</p><p className="mt-1 text-sm">{success.preferred_delivery_location.name}</p><p className="text-xs text-scentia-gold">{DELIVERY_DAY_LABELS[success.preferred_delivery_location.delivery_day] || success.preferred_delivery_location.delivery_day} · {success.preferred_delivery_location.delivery_start_time?.slice(0, 5)}–{success.preferred_delivery_location.delivery_end_time?.slice(0, 5)}</p></div>}
               </div>
               <div className="mt-5 flex flex-col items-center">
                 <div className="rounded-xl bg-white p-3">
@@ -291,12 +293,12 @@ export default function CheckoutModal({
                 {isLocal && (
                   <div className="border-t border-scentia-border pt-3">
                     <p className="text-xs uppercase tracking-widest text-scentia-gold mb-1">Entrega dentro de {businessAddress.city}</p>
-                    <p className="text-xs text-scentia-muted mb-3">Elige el punto que prefieres. El administrador confirmará el lugar y horario contigo por Telegram.</p>
+                    <p className="text-xs text-scentia-muted mb-3">Elige el punto que prefieres. Cada lugar tiene un día y rango horario habitual de entrega.</p>
                     {locations.length === 0 ? <p className="rounded-lg border border-amber-400/20 bg-amber-400/5 p-3 text-xs text-amber-100">Aún no hay puntos de entrega disponibles. Contáctanos para coordinar tu pedido.</p> : <div className="space-y-3">
                       <DeliveryLocationsMap locations={locations} selectedLocationId={preferredLocationId} initialCenter={businessCoordinates || BUSINESS_MAP_CENTER} onSelect={setPreferredLocationId} />
                       {locations.map((location) => (
                       <label key={location.id} className={`block cursor-pointer rounded-xl border p-3 transition ${preferredLocationId === String(location.id) ? "border-scentia-gold/60 bg-scentia-gold/5" : "border-scentia-border"}`}>
-                        <span className="flex items-start gap-2"><input type="radio" name="delivery-location" value={location.id} checked={preferredLocationId === String(location.id)} onChange={() => setPreferredLocationId(String(location.id))} className="mt-1 accent-[#d4af37]" /><span><strong className="text-sm">{location.name}</strong><span className="block text-xs text-scentia-muted">{location.address}, {location.city}</span>{location.notes && <span className="mt-1 block text-xs text-scentia-muted">{location.notes}</span>}</span></span>
+                        <span className="flex items-start gap-2"><input type="radio" name="delivery-location" value={location.id} checked={preferredLocationId === String(location.id)} onChange={() => setPreferredLocationId(String(location.id))} className="mt-1 accent-[#d4af37]" /><span><strong className="text-sm">{location.name}</strong><span className="block text-xs text-scentia-muted">{location.address}, {location.city}</span><span className="mt-1 block text-xs text-scentia-gold">{location.delivery_day ? `Entrega los ${DELIVERY_DAY_LABELS[location.delivery_day] || location.delivery_day}, ${location.delivery_start_time?.slice(0, 5)}–${location.delivery_end_time?.slice(0, 5)}` : "Horario pendiente de confirmar"}</span>{location.notes && <span className="mt-1 block text-xs text-scentia-muted">{location.notes}</span>}</span></span>
                       </label>
                     ))}</div>}
                   </div>

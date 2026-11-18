@@ -55,6 +55,8 @@ def create_sale(db: Session, payload: SaleCreate, user_id: int | None = None) ->
         ).first()
         if not preferred_location:
             raise ValueError("El punto de entrega ya no está disponible")
+        if not preferred_location.delivery_day or not preferred_location.delivery_start_time or not preferred_location.delivery_end_time:
+            raise ValueError("El punto de entrega aún no tiene un horario configurado")
 
     address = Address(**payload.address.model_dump())
     db.add(address)

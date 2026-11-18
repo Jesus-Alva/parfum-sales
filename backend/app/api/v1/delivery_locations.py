@@ -17,7 +17,12 @@ router = APIRouter()
 
 @router.get("/", response_model=list[DeliveryLocationOut])
 def public_locations(db: Session = Depends(get_db)):
-    return db.query(DeliveryLocation).filter(DeliveryLocation.is_active.is_(True)).order_by(DeliveryLocation.name).all()
+    return db.query(DeliveryLocation).filter(
+        DeliveryLocation.is_active.is_(True),
+        DeliveryLocation.delivery_day.isnot(None),
+        DeliveryLocation.delivery_start_time.isnot(None),
+        DeliveryLocation.delivery_end_time.isnot(None),
+    ).order_by(DeliveryLocation.name).all()
 
 
 @router.get("/admin", response_model=list[DeliveryLocationOut])
@@ -46,6 +51,11 @@ def update_location(location_id: int, payload: DeliveryLocationUpdate, db: Sessi
         raise HTTPException(404, "Ubicación no encontrada")
     for key, value in payload.model_dump(exclude_unset=True).items():
         setattr(location, key, value)
+    schedule = (location.delivery_day, location.delivery_start_time, location.delivery_end_time)
+    if any(value is not None for value in schedule) and not all(value is not None for value in schedule):
+        raise HTTPException(400, "Completa el día y el rango horario de entrega")
+    if location.delivery_start_time and location.delivery_end_time and location.delivery_end_time <= location.delivery_start_time:
+        raise HTTPException(400, "La hora de fin debe ser posterior a la hora de inicio")
     db.commit()
     db.refresh(location)
     return location

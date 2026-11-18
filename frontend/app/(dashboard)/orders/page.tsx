@@ -6,7 +6,7 @@ import { api } from "@/lib/api";
 import LocationMap from "@/components/shared/LocationMap";
 import OrderQRScanner from "@/components/sales/OrderQRScanner";
 
-type Location = { id: number; name: string; address: string; city: string; state: string; latitude: number; longitude: number; notes: string };
+type Location = { id: number; name: string; address: string; city: string; state: string; latitude: number; longitude: number; notes: string; delivery_day?: string | null; delivery_start_time?: string | null; delivery_end_time?: string | null };
 type OrderItem = { perfume: { id: number; name: string; brand: string; image_url: string }; quantity: number; unit_price: number };
 type Order = { id: number; folio: string; buyer_name: string; buyer_phone: string; quantity: number; total: number; status: string; delivery_type: string; created_at: string; delivery_scheduled_at?: string | null; preferred_delivery_location?: Location | null; delivery_location?: Location | null; perfume?: { name: string }; items?: OrderItem[]; address: { street: string; number: string; city: string; state: string; postal_code: string; country: string; references: string; latitude?: number | null; longitude?: number | null } };
 
@@ -16,8 +16,6 @@ export default function OrdersPage() {
   const [selected, setSelected] = useState<Order | null>(null);
   const [folio, setFolio] = useState("");
   const [locationId, setLocationId] = useState("");
-  const [scheduledDate, setScheduledDate] = useState("");
-  const [scheduledTime, setScheduledTime] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
@@ -39,15 +37,6 @@ export default function OrdersPage() {
     setSelected(order);
     setError("");
     setLocationId(String(order.delivery_location?.id ?? order.preferred_delivery_location?.id ?? ""));
-    if (order.delivery_scheduled_at) {
-      const localDate = new Date(new Date(order.delivery_scheduled_at).getTime() - new Date(order.delivery_scheduled_at).getTimezoneOffset() * 60_000);
-      const localValue = localDate.toISOString().slice(0, 16);
-      setScheduledDate(localValue.slice(0, 10));
-      setScheduledTime(localValue.slice(11, 16));
-    } else {
-      setScheduledDate("");
-      setScheduledTime("");
-    }
   };
 
   const handleQrScan = async (rawValue: string) => {
@@ -85,9 +74,6 @@ export default function OrdersPage() {
     try {
       const { data } = await api.patch(`/sales/${selected.id}/delivery`, {
         delivery_location_id: locationId ? Number(locationId) : null,
-        delivery_scheduled_at: scheduledDate && scheduledTime
-          ? new Date(`${scheduledDate}T${scheduledTime}`).toISOString()
-          : null,
       });
       setSelected(data); await refresh();
     } catch (e: any) { setError(e?.response?.data?.detail || "No se pudo confirmar la entrega"); }
@@ -104,9 +90,9 @@ export default function OrdersPage() {
     finally { setSaving(false); }
   };
 
-  const point = selected?.delivery_location || selected?.preferred_delivery_location;
-  const today = new Date();
-  const minDeliveryDate = new Date(today.getTime() - today.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+  const point = locations.find((location) => String(location.id) === locationId) || selected?.delivery_location || selected?.preferred_delivery_location;
+  const dayLabels: Record<string, string> = { monday: "Lunes", tuesday: "Martes", wednesday: "Miércoles", thursday: "Jueves", friday: "Viernes", saturday: "Sábado", sunday: "Domingo" };
+  const hasDeliveryWindow = Boolean(point?.delivery_day && point.delivery_start_time && point.delivery_end_time);
   const input = "w-full rounded-lg border border-scentia-border bg-scentia-card px-3 py-2 text-sm text-scentia-text focus:border-scentia-gold focus:outline-none";
 
   return (
@@ -134,9 +120,9 @@ export default function OrdersPage() {
 
             <div className="rounded-xl border border-scentia-border p-4"><h3 className="mb-3 font-display text-lg text-scentia-gold">Productos del pedido</h3>{selected.items?.length ? <ul className="divide-y divide-scentia-border">{selected.items.map((item) => <li key={item.perfume.id} className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"><div className="min-w-0"><p className="truncate text-sm font-medium">{item.perfume.name}</p><p className="text-xs text-scentia-muted">{item.perfume.brand} · {item.quantity} {item.quantity === 1 ? "pieza" : "piezas"}</p></div><p className="shrink-0 text-sm">${(Number(item.unit_price) * item.quantity).toFixed(2)}</p></li>)}</ul> : <p className="text-sm text-scentia-muted">{selected.perfume?.name || "Perfume"} · {selected.quantity} pza.</p>}</div>
 
-            {selected.delivery_type === "local" ? <div className="space-y-4 rounded-xl border border-scentia-border p-4"><div><h3 className="font-display text-lg text-scentia-gold">Confirmar entrega</h3><p className="text-xs text-scentia-muted">Acordado con el comprador por Whatsapp.</p></div><label className="block text-sm text-scentia-muted">Ubicación<select className={`${input} mt-1`} value={locationId} onChange={(e) => setLocationId(e.target.value)}><option value="">Selecciona una ubicación</option>{locations.map((location) => <option key={location.id} value={location.id}>{location.name} · {location.address}</option>)}</select></label><div className="grid gap-3 sm:grid-cols-2"><label className="block text-sm text-scentia-muted">Fecha<input aria-label="Fecha de entrega" className={`${input} mt-1 [color-scheme:dark]`} type="date" min={minDeliveryDate} value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} /></label><label className="block text-sm text-scentia-muted">Hora<input aria-label="Hora de entrega" className={`${input} mt-1 [color-scheme:dark]`} type="time" step="60" value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)} /></label></div>{scheduledDate && scheduledDate < minDeliveryDate && <p className="text-xs text-red-300">La fecha de entrega no puede ser anterior a hoy.</p>}{point && <LocationMap latitude={point.latitude} longitude={point.longitude} label={point.name} />}</div> : <div className="space-y-3 rounded-xl border border-scentia-border p-4"><div><h3 className="font-display text-lg text-scentia-gold">Envío por paquetería</h3><p className="mt-1 text-sm text-scentia-muted">{selected.address.street} {selected.address.number}, {selected.address.city}, {selected.address.state} {selected.address.postal_code}</p><p className="mt-2 text-xs text-scentia-muted">Confirma el pedido cuando esté listo para enviar. Márcalo como entregado al completar la entrega.</p></div>{selected.address.latitude != null && selected.address.longitude != null && <LocationMap latitude={selected.address.latitude} longitude={selected.address.longitude} label="Domicilio de envío" />}</div>}
+            {selected.delivery_type === "local" ? <div className="space-y-4 rounded-xl border border-scentia-border p-4"><div><h3 className="font-display text-lg text-scentia-gold">Confirmar entrega</h3><p className="text-xs text-scentia-muted">Se usará el día y rango horario habitual del punto elegido.</p></div><label className="block text-sm text-scentia-muted">Ubicación<select className={`${input} mt-1`} value={locationId} onChange={(e) => setLocationId(e.target.value)}><option value="">Selecciona una ubicación</option>{locations.map((location) => <option key={location.id} value={location.id}>{location.name} · {location.address}</option>)}</select></label>{point && <div className="rounded-lg border border-scentia-border bg-scentia-card/50 p-3 text-sm"><p className="text-xs text-scentia-muted">Horario habitual</p><p className="mt-1 text-scentia-gold">{hasDeliveryWindow ? `${dayLabels[point.delivery_day!] || point.delivery_day} · ${point.delivery_start_time?.slice(0, 5)}–${point.delivery_end_time?.slice(0, 5)}` : "Pendiente de configurar en Ubicaciones"}</p></div>}{point && <LocationMap latitude={point.latitude} longitude={point.longitude} label={point.name} />}</div> : <div className="space-y-3 rounded-xl border border-scentia-border p-4"><div><h3 className="font-display text-lg text-scentia-gold">Envío por paquetería</h3><p className="mt-1 text-sm text-scentia-muted">{selected.address.street} {selected.address.number}, {selected.address.city}, {selected.address.state} {selected.address.postal_code}</p><p className="mt-2 text-xs text-scentia-muted">Confirma el pedido cuando esté listo para enviar. Márcalo como entregado al completar la entrega.</p></div>{selected.address.latitude != null && selected.address.longitude != null && <LocationMap latitude={selected.address.latitude} longitude={selected.address.longitude} label="Domicilio de envío" />}</div>}
 
-            {selected.status !== "delivered" && <div className="flex flex-wrap gap-3"><button onClick={confirm} disabled={saving || (selected.delivery_type === "local" && (!locationId || !scheduledDate || scheduledDate < minDeliveryDate || !scheduledTime))} className="rounded-lg bg-gradient-to-r from-scentia-gold to-scentia-gold-soft px-4 py-2.5 text-sm font-semibold text-black transition hover:opacity-90 disabled:opacity-50">{selected.status === "ready_for_delivery" ? "Actualizar confirmación" : selected.delivery_type === "local" ? "Confirmar lugar y horario" : "Confirmar pedido"}</button><button onClick={complete} disabled={saving || (selected.delivery_type === "local" && selected.status !== "ready_for_delivery")} className="rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-4 py-2.5 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-400/20 disabled:opacity-50">Realizar entrega · Finalizar</button></div>}
+            {selected.status !== "delivered" && <div className="flex flex-wrap gap-3"><button onClick={confirm} disabled={saving || (selected.delivery_type === "local" && (!locationId || !hasDeliveryWindow))} className="rounded-lg bg-gradient-to-r from-scentia-gold to-scentia-gold-soft px-4 py-2.5 text-sm font-semibold text-black transition hover:opacity-90 disabled:opacity-50">{selected.status === "ready_for_delivery" ? "Actualizar confirmación" : selected.delivery_type === "local" ? "Confirmar punto de entrega" : "Confirmar pedido"}</button><button onClick={complete} disabled={saving || (selected.delivery_type === "local" && selected.status !== "ready_for_delivery")} className="rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-4 py-2.5 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-400/20 disabled:opacity-50">Realizar entrega · Finalizar</button></div>}
           </div>}
         </section>
       </div>

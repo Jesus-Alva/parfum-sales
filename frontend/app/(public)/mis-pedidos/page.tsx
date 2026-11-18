@@ -16,7 +16,8 @@ type Order = {
   delivery_type: string;
   created_at: string;
   delivery_scheduled_at?: string | null;
-  delivery_location?: { name: string; address: string; city: string } | null;
+  preferred_delivery_location?: { name: string; address: string; city: string; delivery_day?: string | null; delivery_start_time?: string | null; delivery_end_time?: string | null } | null;
+  delivery_location?: { name: string; address: string; city: string; delivery_day?: string | null; delivery_start_time?: string | null; delivery_end_time?: string | null } | null;
   items: { perfume: { name: string }; quantity: number }[];
 };
 
@@ -25,6 +26,7 @@ const STATUS_LABELS: Record<string, string> = {
   ready_for_delivery: "Entrega confirmada",
   delivered: "Entregado",
 };
+const DELIVERY_DAY_LABELS: Record<string, string> = { monday: "lunes", tuesday: "martes", wednesday: "miércoles", thursday: "jueves", friday: "viernes", saturday: "sábado", sunday: "domingo" };
 
 export default function MyOrdersPage() {
   const router = useRouter();
@@ -84,7 +86,7 @@ export default function MyOrdersPage() {
               </div>
               <div className="mt-4 border-t border-scentia-border pt-4">
                 <p className="text-sm text-scentia-muted">{order.items?.map((item) => `${item.perfume.name} × ${item.quantity}`).join(" · ")}</p>
-                {order.delivery_location && <p className="mt-2 text-xs text-scentia-muted">Entrega en {order.delivery_location.name}, {order.delivery_location.address}, {order.delivery_location.city}{order.delivery_scheduled_at ? ` · ${new Date(order.delivery_scheduled_at).toLocaleString("es-MX")}` : ""}</p>}
+                {(order.delivery_location || order.preferred_delivery_location) && (() => { const location = order.delivery_location || order.preferred_delivery_location!; const schedule = location.delivery_day && location.delivery_start_time && location.delivery_end_time ? ` · ${DELIVERY_DAY_LABELS[location.delivery_day] || location.delivery_day}, ${location.delivery_start_time.slice(0, 5)}–${location.delivery_end_time.slice(0, 5)}` : ""; return <p className="mt-2 text-xs text-scentia-muted">Entrega en {location.name}, {location.address}, {location.city}{schedule}{order.delivery_scheduled_at ? ` · ${new Date(order.delivery_scheduled_at).toLocaleString("es-MX")}` : ""}</p>; })()}
                 <p className="mt-3 text-right font-semibold text-scentia-gold">Total: ${Number(order.total).toFixed(2)}</p>
                 <div className="mt-4 flex justify-end">
                   <button type="button" onClick={() => setVisibleQr((current) => current === order.id ? null : order.id)} className="inline-flex items-center gap-2 rounded-lg border border-scentia-gold/40 px-3 py-2 text-sm text-scentia-gold transition hover:bg-scentia-gold/10" aria-expanded={visibleQr === order.id}>

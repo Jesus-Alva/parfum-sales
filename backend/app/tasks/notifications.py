@@ -1,8 +1,20 @@
 from datetime import datetime
 from zoneinfo import ZoneInfo
+import logging
 
 from app.core.celery_app import celery_app
 from app.services.telegram_service import send_telegram_message
+
+logger = logging.getLogger(__name__)
+DELIVERY_DAY_LABELS = {
+    "monday": "Lunes",
+    "tuesday": "Martes",
+    "wednesday": "Miércoles",
+    "thursday": "Jueves",
+    "friday": "Viernes",
+    "saturday": "Sábado",
+    "sunday": "Domingo",
+}
 
 
 @celery_app.task(name="notify_new_sale")
@@ -24,13 +36,22 @@ def notify_new_sale(sale_data: dict):
         f"<b>Ubicación preferida:</b> {sale_data.get('preferred_location', 'Por paquetería')}\n"
         "<i>Confirma el lugar y horario desde el panel de pedidos.</i>\n"
     )
-    send_telegram_message(text)
-    return {"ok": True, "folio": sale_data["folio"]}
+    sent = send_telegram_message(text)
+    if not sent:
+        logger.warning("No se pudo entregar por Telegram la notificación del pedido %s", sale_data["folio"])
+    return {"ok": sent, "folio": sale_data["folio"]}
 
 
 @celery_app.task(name="notify_delivery_confirmed")
 def notify_delivery_confirmed(delivery_data: dict):
-    scheduled = datetime.fromisoformat(delivery_data["scheduled_at"]).astimezone(ZoneInfo("America/Mexico_City"))
+    if delivery_data.get("scheduled_at"):
+        scheduled = datetime.fromisoformat(delivery_data["scheduled_at"]).astimezone(ZoneInfo("America/Mexico_City"))
+        schedule_text = f"<b>Fecha y hora acordadas:</b> {scheduled.strftime('%d/%m/%Y %H:%M')}"
+    else:
+        day = DELIVERY_DAY_LABELS.get(delivery_data.get("delivery_day", ""), "Por confirmar")
+        start = delivery_data.get("delivery_start_time", "")
+        end = delivery_data.get("delivery_end_time", "")
+        schedule_text = f"<b>Día habitual:</b> {day}\n<b>Horario:</b> {start}–{end}"
     text = (
         "📍 <b>Entrega local confirmada</b>\n\n"
         f"<b>Folio:</b> {delivery_data['folio']}\n"
@@ -38,7 +59,9 @@ def notify_delivery_confirmed(delivery_data: dict):
         f"<b>Teléfono:</b> {delivery_data['buyer_phone']}\n"
         f"<b>Lugar:</b> {delivery_data['location']}\n"
         f"<b>Dirección:</b> {delivery_data['address']}\n"
-        f"<b>Fecha y hora:</b> {scheduled.strftime('%d/%m/%Y %H:%M')}\n"
+        f"{schedule_text}\n"
     )
-    send_telegram_message(text)
-    return {"ok": True, "folio": delivery_data["folio"]}
+    sent = send_telegram_message(text)
+    if not sent:
+        logger.warning("No se pudo entregar por Telegram la confirmación del pedido %s", delivery_data["folio"])
+    return {"ok": sent, "folio": delivery_data["folio"]}

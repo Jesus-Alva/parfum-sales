@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from datetime import datetime
 import logging
 
 
@@ -83,7 +82,6 @@ def find_order_from_qr(folio: str, db: Session = Depends(get_db), _: User = Depe
 
 class DeliveryConfirmation(BaseModel):
     delivery_location_id: int | None = None
-    delivery_scheduled_at: datetime | None = None
 
 
 @router.patch("/{sale_id}/delivery", response_model=SaleOut)
@@ -96,24 +94,29 @@ def confirm_delivery(sale_id: int, payload: DeliveryConfirmation, db: Session = 
         location = db.query(DeliveryLocation).filter(DeliveryLocation.id == location_id, DeliveryLocation.is_active.is_(True)).first()
         if not location:
             raise HTTPException(400, "Selecciona una ubicación activa para la entrega")
-        if not payload.delivery_scheduled_at:
-            raise HTTPException(400, "Indica la fecha y hora acordadas")
+        if not location.delivery_day or not location.delivery_start_time or not location.delivery_end_time:
+            raise HTTPException(400, "Configura el día y el rango horario de esta ubicación antes de confirmar")
         sale.delivery_location_id = location.id
-        sale.delivery_scheduled_at = payload.delivery_scheduled_at
+        sale.delivery_scheduled_at = None
         sale.status = "ready_for_delivery"
     else:
         sale.status = "ready_for_delivery"
     db.commit()
     db.refresh(sale)
     if sale.delivery_type == "local":
-        notify_delivery_confirmed.delay({
-            "folio": sale.folio,
-            "buyer_name": sale.buyer_name,
-            "buyer_phone": sale.buyer_phone,
-            "location": sale.delivery_location.name,
-            "address": sale.delivery_location.address,
-            "scheduled_at": sale.delivery_scheduled_at.isoformat(),
-        })
+        try:
+            notify_delivery_confirmed.delay({
+                "folio": sale.folio,
+                "buyer_name": sale.buyer_name,
+                "buyer_phone": sale.buyer_phone,
+                "location": sale.delivery_location.name,
+                "address": sale.delivery_location.address,
+                "delivery_day": sale.delivery_location.delivery_day,
+                "delivery_start_time": sale.delivery_location.delivery_start_time.strftime("%H:%M"),
+                "delivery_end_time": sale.delivery_location.delivery_end_time.strftime("%H:%M"),
+            })
+        except Exception:
+            logger.exception("No se pudo encolar la notificación de entrega para el pedido %s", sale.folio)
     return sale
 
 
