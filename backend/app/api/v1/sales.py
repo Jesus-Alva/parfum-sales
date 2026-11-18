@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from datetime import datetime
+import logging
 
 
 from app.database import get_db
@@ -14,6 +15,7 @@ from app.tasks.notifications import notify_new_sale, notify_delivery_confirmed
 from app.models.delivery_location import DeliveryLocation
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.post("/", response_model=SaleOut, status_code=201)
@@ -23,20 +25,24 @@ def register_sale(payload: SaleCreate, db: Session = Depends(get_db), current: U
     except ValueError as e:
         raise HTTPException(400, str(e))
 
-    # Enviar notificación de Telegram de forma asíncrona
-    notify_new_sale.delay({
-        "folio": sale.folio,
-        "items": [
-            {"name": item.perfume.name, "quantity": item.quantity, "unit_price": item.unit_price}
-            for item in sale.items
-        ],
-        "total": sale.total,
-        "buyer_name": sale.buyer_name,
-        "buyer_phone": sale.buyer_phone,
-        "address": f"{sale.address.street} {sale.address.number}, {sale.address.city}",
-        "delivery_type": sale.delivery_type,
-        "preferred_location": sale.preferred_delivery_location.name if sale.preferred_delivery_location else "Por paquetería",
-    })
+    # The sale has committed already. A broker outage must not make the client
+    # believe the order failed and submit a duplicate purchase.
+    try:
+        notify_new_sale.delay({
+            "folio": sale.folio,
+            "items": [
+                {"name": item.perfume.name, "quantity": item.quantity, "unit_price": item.unit_price}
+                for item in sale.items
+            ],
+            "total": sale.total,
+            "buyer_name": sale.buyer_name,
+            "buyer_phone": sale.buyer_phone,
+            "address": f"{sale.address.street} {sale.address.number}, {sale.address.city}",
+            "delivery_type": sale.delivery_type,
+            "preferred_location": sale.preferred_delivery_location.name if sale.preferred_delivery_location else "Por paquetería",
+        })
+    except Exception:
+        logger.exception("No se pudo enviar la notificación de Telegram para la venta %s", sale.folio)
     return sale
 
 
@@ -63,6 +69,15 @@ def find_order(folio: str, db: Session = Depends(get_db), _: User = Depends(get_
     sale = db.query(Sale).filter(Sale.folio == folio.strip()).first()
     if not sale or sale.status == "delivered":
         raise HTTPException(404, "Pedido pendiente no encontrado")
+    return sale
+
+
+@router.get("/orders/qr/{folio}", response_model=SaleOut)
+def find_order_from_qr(folio: str, db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
+    """Returns the order identified by a QR folio to authenticated administrators."""
+    sale = db.query(Sale).filter(Sale.folio == folio.strip()).first()
+    if not sale:
+        raise HTTPException(404, "Pedido del código QR no encontrado")
     return sale
 
 

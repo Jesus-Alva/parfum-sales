@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { api } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import InteractiveMap from "@/components/shared/InteractiveMap";
@@ -161,6 +162,12 @@ export default function CheckoutModal({
                 <p className="font-mono text-scentia-gold text-lg mb-2">{success.folio}</p>
                 <p className="text-xs text-scentia-muted">Total</p>
                 <p className="text-lg">${success.total.toFixed(2)}</p>
+              </div>
+              <div className="mt-5 flex flex-col items-center">
+                <div className="rounded-xl bg-white p-3">
+                  <QRCodeSVG value={success.folio} size={176} level="M" includeMargin />
+                </div>
+                <p className="mt-3 max-w-xs text-xs text-scentia-muted">El administrador puede escanear este código en Pedidos para consultar los productos.</p>
               </div>
               <button
                 onClick={() => { onComplete(); onClose(); }}

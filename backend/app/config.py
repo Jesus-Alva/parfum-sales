@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from typing import List
+from urllib.parse import urlsplit
 
 
 class Settings(BaseSettings):
@@ -45,13 +46,29 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins(self) -> List[str]:
-        """Convierte la cadena separada por comas en una lista limpia."""
-        origins = [o.strip() for o in self.BACKEND_CORS_ORIGINS.split(",") if o.strip()]
+        """Build a normalized allowlist for the frontend's development origins."""
+        configured = [o.strip() for o in self.BACKEND_CORS_ORIGINS.split(",") if o.strip()]
+        configured.append(self.FRONTEND_BASE_URL.strip())
+
+        # Browsers send origins without a trailing slash or path. Normalize
+        # values copied from .env so a harmless trailing slash cannot break CORS.
+        origins = []
+        for value in configured:
+            parsed = urlsplit(value)
+            origin = f"{parsed.scheme}://{parsed.netloc}" if parsed.scheme and parsed.netloc else value.rstrip("/")
+            if origin and origin not in origins:
+                origins.append(origin)
+
+        # This hostname is used to access the app through the local reverse proxy.
+        for origin in ("http://localhost.local", "http://localhost.local:3005"):
+            if origin not in origins:
+                origins.append(origin)
+
         lan_ip = self.APP_LAN_IP.strip()
         if lan_ip:
-            lan_origin = f"http://{lan_ip}:3005"
-            if lan_origin not in origins:
-                origins.append(lan_origin)
+            for lan_origin in (f"http://{lan_ip}", f"http://{lan_ip}:3005"):
+                if lan_origin not in origins:
+                    origins.append(lan_origin)
         return origins
 
 

@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { PackageSearch } from "lucide-react";
+import { PackageSearch, QrCode } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { api } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 
@@ -31,6 +32,7 @@ export default function MyOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [signedIn, setSignedIn] = useState(false);
   const [error, setError] = useState("");
+  const [visibleQr, setVisibleQr] = useState<number | null>(null);
 
   useEffect(() => {
     if (!getToken()) {
@@ -84,6 +86,15 @@ export default function MyOrdersPage() {
                 <p className="text-sm text-scentia-muted">{order.items?.map((item) => `${item.perfume.name} × ${item.quantity}`).join(" · ")}</p>
                 {order.delivery_location && <p className="mt-2 text-xs text-scentia-muted">Entrega en {order.delivery_location.name}, {order.delivery_location.address}, {order.delivery_location.city}{order.delivery_scheduled_at ? ` · ${new Date(order.delivery_scheduled_at).toLocaleString("es-MX")}` : ""}</p>}
                 <p className="mt-3 text-right font-semibold text-scentia-gold">Total: ${Number(order.total).toFixed(2)}</p>
+                <div className="mt-4 flex justify-end">
+                  <button type="button" onClick={() => setVisibleQr((current) => current === order.id ? null : order.id)} className="inline-flex items-center gap-2 rounded-lg border border-scentia-gold/40 px-3 py-2 text-sm text-scentia-gold transition hover:bg-scentia-gold/10" aria-expanded={visibleQr === order.id}>
+                    <QrCode size={16} /> {visibleQr === order.id ? "Ocultar QR" : "Mostrar QR del pedido"}
+                  </button>
+                </div>
+                {visibleQr === order.id && <div className="mt-4 flex flex-col items-center rounded-xl border border-scentia-border bg-scentia-card/50 p-4">
+                  <div className="rounded-lg bg-white p-3"><QRCodeSVG value={order.folio} size={176} level="M" includeMargin /></div>
+                  <p className="mt-3 text-center text-xs text-scentia-muted">Muestra este código al administrador para consultar los productos del pedido.</p>
+                </div>}
               </div>
             </article>
           ))}
