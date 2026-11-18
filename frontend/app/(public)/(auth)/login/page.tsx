@@ -53,7 +53,7 @@ function LoginForm() {
       onSubmit={submit}
       className="glass rounded-2xl p-8 w-full max-w-md relative z-10"
     >
-      <h1 className="font-display text-3xl mb-1 text-gradient-gold">Scentia</h1>
+      <h1 className="font-display text-3xl mb-1 text-gradient-gold">ScentiA</h1>
       <p className="text-scentia-muted text-sm mb-6">Inicia sesión</p>
 
       {error && (

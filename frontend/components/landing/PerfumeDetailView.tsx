@@ -20,6 +20,7 @@ import type { CartItem } from "@/store/cartStore";
 import CheckoutModal from "@/components/sales/CheckoutModal";
 import BrandLabel from "@/components/perfumes/BrandLabel";
 import PerfumePrice from "@/components/perfumes/PerfumePrice";
+import PerfumeReviews from "@/components/perfumes/PerfumeReviews";
 
 export default function PerfumeDetailView({ perfume }: { perfume: any }) {
   const router = useRouter();
@@ -278,6 +279,7 @@ export default function PerfumeDetailView({ perfume }: { perfume: any }) {
           </motion.div>
         </motion.div>
       </div>
+      <PerfumeReviews perfumeId={perfume.id} />
       {quickBuyItem && <CheckoutModal items={[quickBuyItem]} onClose={() => setQuickBuyItem(null)} onComplete={() => undefined} />}
     </>
   );

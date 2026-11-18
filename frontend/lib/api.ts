@@ -1,8 +1,9 @@
 import axios from "axios";
 import { clearToken } from "@/lib/auth";
+import { API_BASE_URL } from "@/lib/config";
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost/api/v1",
+  baseURL: API_BASE_URL,
   headers: { "Content-Type": "application/json" },
 });
 
@@ -63,7 +64,6 @@ export const uploadImages = async (files: File[]): Promise<string[]> => {
 export const imageUrl = (path: string): string => {
   if (!path) return "";
   if (path.startsWith("http")) return path;
-  const base = (process.env.NEXT_PUBLIC_API_URL || "http://localhost/api/v1")
-    .replace(/\/api\/v1\/?$/, "");
+  const base = API_BASE_URL.replace(/\/api\/v1\/?$/, "");
   return `${base}${path}`;
 };

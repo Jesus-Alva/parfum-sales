@@ -39,6 +39,12 @@ class Perfume(Base):
     )
 
     brand_record = relationship("Brand", back_populates="perfumes", lazy="joined")
+    reviews = relationship(
+        "PerfumeReview",
+        back_populates="perfume",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
     @property
     def discounted_price(self) -> float:

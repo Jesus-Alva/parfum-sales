@@ -124,6 +124,7 @@ services:
     environment:
       - WATCHPACK_POLLING=true
       - CHOKIDAR_USEPOLLING=true
+      - NEXT_PUBLIC_APP_LAN_IP=${APP_LAN_IP:-}
     ports:
       - "3005:3000"
     volumes:

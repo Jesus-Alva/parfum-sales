@@ -17,3 +17,9 @@ class User(Base):
     address_id: Mapped[int | None] = mapped_column(ForeignKey("addresses.id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     address = relationship("Address", foreign_keys=[address_id])
+    perfume_reviews = relationship(
+        "PerfumeReview",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )

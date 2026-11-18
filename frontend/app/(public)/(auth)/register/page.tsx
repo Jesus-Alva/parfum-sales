@@ -33,7 +33,7 @@ export default function RegisterPage() {
         className="glass rounded-2xl p-8 w-full max-w-md"
       >
         <h1 className="font-display text-3xl mb-1 text-gradient-gold">Crear cuenta</h1>
-        <p className="text-scentia-muted text-sm mb-6">Únete a Scentia</p>
+        <p className="text-scentia-muted text-sm mb-6">Únete a ScentiA</p>
 
         {error && (
           <div className="bg-red-500/10 border border-red-500/30 text-red-300 text-sm rounded-lg p-3 mb-4">
