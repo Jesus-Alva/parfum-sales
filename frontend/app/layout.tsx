@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import GoogleAnalyticsPageTracker from "@/components/GoogleAnalyticsPageTracker";
+import WelcomeSplash from "@/components/shared/WelcomeSplash";
 
 export const metadata: Metadata = {
   title: "Scentia | Perfumes de Alta Gama",
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <GoogleAnalytics />
         {/* Este componente debe enviar el page_view en cada cambio de ruta */}
         <GoogleAnalyticsPageTracker />
+        <WelcomeSplash />
         {children}
       </body>
     </html>

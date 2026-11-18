@@ -4,10 +4,12 @@ const notifyAuthChange = () => {
   if (typeof window !== "undefined") window.dispatchEvent(new Event("scentia:auth-change"));
 };
 
-export const saveToken = (token: string, isAdmin: boolean = false) => {
+export const saveToken = (token: string, isAdmin: boolean = false, fullName: string = "") => {
   if (typeof window === "undefined") return;
   localStorage.setItem("scentia_token", token);
   localStorage.setItem("scentia_is_admin", isAdmin ? "1" : "0");
+  if (fullName) localStorage.setItem("scentia_full_name", fullName);
+  sessionStorage.setItem("scentia_show_welcome", "1");
   document.cookie = `scentia_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
   document.cookie = `scentia_is_admin=${isAdmin ? "1" : "0"}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
   notifyAuthChange();
@@ -27,6 +29,8 @@ export const clearToken = () => {
   if (typeof window === "undefined") return;
   localStorage.removeItem("scentia_token");
   localStorage.removeItem("scentia_is_admin");
+  localStorage.removeItem("scentia_full_name");
+  sessionStorage.removeItem("scentia_show_welcome");
   document.cookie = "scentia_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   document.cookie = "scentia_is_admin=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   useCartStore.getState().clear();
