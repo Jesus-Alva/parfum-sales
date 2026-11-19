@@ -55,6 +55,7 @@ export default function CheckoutModal({
           setForm((prev) => ({
             ...prev,
             buyer_name: prev.buyer_name.trim() ? prev.buyer_name : data.full_name || prev.buyer_name,
+            buyer_phone: prev.buyer_phone.trim() ? prev.buyer_phone : data.phone || prev.buyer_phone,
             ...(data.address ? { address: { ...data.address } } : {}),
           }));
           setAddressSaved(Boolean(data.address));

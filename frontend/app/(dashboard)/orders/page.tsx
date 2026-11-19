@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { QrCode } from "lucide-react";
+import { CheckCircle2, QrCode, X } from "lucide-react";
 import { api } from "@/lib/api";
 import LocationMap from "@/components/shared/LocationMap";
 import OrderQRScanner from "@/components/sales/OrderQRScanner";
@@ -17,6 +17,7 @@ export default function OrdersPage() {
   const [folio, setFolio] = useState("");
   const [locationId, setLocationId] = useState("");
   const [error, setError] = useState("");
+  const [completedFolio, setCompletedFolio] = useState("");
   const [saving, setSaving] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [lookingUpQr, setLookingUpQr] = useState(false);
@@ -30,6 +31,12 @@ export default function OrdersPage() {
   };
 
   useEffect(() => { refresh().catch(() => setError("No se pudieron cargar los pedidos")); }, []);
+
+  useEffect(() => {
+    if (!completedFolio) return;
+    const timer = window.setTimeout(() => setCompletedFolio(""), 6000);
+    return () => window.clearTimeout(timer);
+  }, [completedFolio]);
 
   const filtered = useMemo(() => orders.filter((order) => order.folio.toLowerCase().includes(folio.trim().toLowerCase())), [orders, folio]);
 
@@ -82,10 +89,14 @@ export default function OrdersPage() {
 
   const complete = async () => {
     if (!selected) return;
+    const folioToComplete = selected.folio;
     setSaving(true); setError("");
     try {
       await api.post(`/sales/${selected.id}/complete`);
-      setSelected(null); await refresh();
+      setSelected(null);
+      setCompletedFolio(folioToComplete);
+      try { await refresh(); }
+      catch { setError("La entrega finalizó, pero no se pudo actualizar la lista de pedidos."); }
     } catch (e: any) { setError(e?.response?.data?.detail || "No se pudo completar el pedido"); }
     finally { setSaving(false); }
   };
@@ -98,6 +109,7 @@ export default function OrdersPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs uppercase tracking-[0.25em] text-scentia-muted">Operación</p><h1 className="font-display text-3xl text-gradient-gold">Pedidos</h1></div><button type="button" onClick={() => { setError(""); setShowScanner(true); }} className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-scentia-gold to-scentia-gold-soft px-4 py-2.5 text-sm font-semibold text-black"><QrCode size={17} /> Escanear QR</button></div>
+      {completedFolio && <div role="status" aria-live="polite" className="flex items-center justify-between gap-3 rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-4 text-sm text-emerald-100"><div className="flex items-center gap-3"><CheckCircle2 className="shrink-0 text-emerald-300" size={20} /><span><strong>Entrega finalizada.</strong> El pedido <span className="font-mono">{completedFolio}</span> quedó marcado como entregado.</span></div><button type="button" onClick={() => setCompletedFolio("")} className="rounded-md p-1 text-emerald-200 transition hover:bg-emerald-300/10" aria-label="Cerrar aviso"><X size={17} /></button></div>}
       {error && <p className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{error}</p>}
       {lookingUpQr && <p role="status" className="text-sm text-scentia-muted">Buscando pedido escaneado…</p>}
       <div className="grid gap-6 xl:grid-cols-[minmax(300px,0.8fr)_minmax(0,1.2fr)]">

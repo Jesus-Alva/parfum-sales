@@ -4,6 +4,7 @@ import logging
 
 from app.core.celery_app import celery_app
 from app.services.telegram_service import send_telegram_message
+from app.services.whatsapp_service import send_new_order_whatsapp
 
 logger = logging.getLogger(__name__)
 DELIVERY_DAY_LABELS = {
@@ -36,10 +37,18 @@ def notify_new_sale(sale_data: dict):
         f"<b>Ubicación preferida:</b> {sale_data.get('preferred_location', 'Por paquetería')}\n"
         "<i>Confirma el lugar y horario desde el panel de pedidos.</i>\n"
     )
-    sent = send_telegram_message(text)
-    if not sent:
+    telegram_sent = send_telegram_message(text)
+    if not telegram_sent:
         logger.warning("No se pudo entregar por Telegram la notificación del pedido %s", sale_data["folio"])
-    return {"ok": sent, "folio": sale_data["folio"]}
+    whatsapp_sent = send_new_order_whatsapp(sale_data)
+    if not whatsapp_sent:
+        logger.warning("No se pudo entregar por WhatsApp la notificación del pedido %s", sale_data["folio"])
+    return {
+        "ok": telegram_sent or whatsapp_sent,
+        "telegram": telegram_sent,
+        "whatsapp": whatsapp_sent,
+        "folio": sale_data["folio"],
+    }
 
 
 @celery_app.task(name="notify_delivery_confirmed")

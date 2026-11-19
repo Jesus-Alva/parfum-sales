@@ -16,6 +16,12 @@ class Settings(BaseSettings):
 
     TELEGRAM_BOT_TOKEN: str = ""
     TELEGRAM_CHAT_ID: str = ""
+    WHATSAPP_ACCESS_TOKEN: str = ""
+    WHATSAPP_PHONE_NUMBER_ID: str = ""
+    WHATSAPP_TO_NUMBER: str = ""
+    WHATSAPP_API_VERSION: str = "v27.0"
+    WHATSAPP_ORDER_TEMPLATE: str = "scentia_new_order"
+    WHATSAPP_TEMPLATE_LANGUAGE: str = "es_MX"
     BUSINESS_CITY: str = ""
     BUSINESS_STATE: str = ""
 

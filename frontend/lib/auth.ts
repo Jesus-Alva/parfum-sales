@@ -4,6 +4,12 @@ const notifyAuthChange = () => {
   if (typeof window !== "undefined") window.dispatchEvent(new Event("scentia:auth-change"));
 };
 
+export const updateCachedFullName = (fullName: string) => {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("scentia_full_name", fullName);
+  notifyAuthChange();
+};
+
 export const saveToken = (token: string, isAdmin: boolean = false, fullName: string = "") => {
   if (typeof window === "undefined") return;
   localStorage.setItem("scentia_token", token);

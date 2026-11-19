@@ -5,10 +5,10 @@ from pydantic import BaseModel, Field, field_validator
 from app.database import get_db
 from app.api.deps import get_current_user, get_current_admin
 from app.models.user import User
-from app.schemas.user import UserOut
+from app.schemas.user import UserOut, UserProfileUpdate, UserPasswordChange
 from app.schemas.sale import AddressCreate
 from app.models.address import Address
-from app.core.security import hash_password
+from app.core.security import hash_password, verify_password
 
 router = APIRouter()
 
@@ -16,6 +16,46 @@ router = APIRouter()
 @router.get("/me", response_model=UserOut)
 def me(current: User = Depends(get_current_user)):
     return current
+
+
+@router.patch("/me", response_model=UserOut)
+def update_my_profile(
+    payload: UserProfileUpdate,
+    db: Session = Depends(get_db),
+    current: User = Depends(get_current_user),
+):
+    changes = payload.model_dump(exclude_unset=True)
+    address_was_submitted = "address" in changes
+    address_data = changes.pop("address", None)
+    for key, value in changes.items():
+        setattr(current, key, value)
+    if address_was_submitted:
+        if address_data is None:
+            # Keep past orders' address rows intact while removing it from the profile.
+            current.address_id = None
+        elif current.address:
+            for key, value in address_data.items():
+                setattr(current.address, key, value)
+        else:
+            address = Address(**address_data)
+            db.add(address)
+            db.flush()
+            current.address_id = address.id
+    db.commit()
+    db.refresh(current)
+    return current
+
+
+@router.put("/me/password", status_code=204)
+def change_my_password(
+    payload: UserPasswordChange,
+    db: Session = Depends(get_db),
+    current: User = Depends(get_current_user),
+):
+    if not verify_password(payload.current_password, current.hashed_password):
+        raise HTTPException(400, "La contraseña actual no es correcta")
+    current.hashed_password = hash_password(payload.new_password)
+    db.commit()
 
 
 @router.put("/me/address", response_model=UserOut)

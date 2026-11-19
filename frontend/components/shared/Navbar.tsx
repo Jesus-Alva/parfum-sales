@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ShoppingBag, User, LogOut, LayoutDashboard, PackageSearch } from "lucide-react";
 import { getToken, clearToken, isAdmin } from "@/lib/auth";
+import { api } from "@/lib/api";
 import { useCartStore } from "@/store/cartStore";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,7 @@ export default function Navbar() {
   const router = useRouter();
   const [isAuthed, setIsAuthed] = useState(false);
   const [isAdminState, setIsAdminState] = useState(false);
+  const [userName, setUserName] = useState("");
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [navRevealed, setNavRevealed] = useState(false);
@@ -32,8 +34,15 @@ export default function Navbar() {
   // Detectar auth y scroll
   useEffect(() => {
     const syncAuth = () => {
-      setIsAuthed(!!getToken());
+      const token = getToken();
+      setIsAuthed(!!token);
       setIsAdminState(isAdmin());
+      setUserName(localStorage.getItem("scentia_full_name") || "");
+      if (token) api.get("/users/me").then(({ data }) => {
+        if (getToken() !== token) return;
+        setUserName(data.full_name || "");
+        localStorage.setItem("scentia_full_name", data.full_name || "");
+      }).catch(() => undefined);
     };
     syncAuth();
     const handleScroll = () => {
@@ -63,7 +72,7 @@ export default function Navbar() {
   };
 
   const isLanding = pathname === "/";
-  const hideAtTop = isLanding && !scrolled && !mobileOpen && !navRevealed;
+  const hideAtTop = isLanding && !isAuthed && !scrolled && !mobileOpen && !navRevealed;
 
   return (
     <>
@@ -155,6 +164,9 @@ export default function Navbar() {
 
             {isAuthed ? (
               <>
+                <Link href="/perfil" className="flex max-w-48 items-center gap-2 rounded-full border border-scentia-border px-3 py-2 text-sm text-scentia-text transition hover:border-scentia-gold/40 hover:text-scentia-gold" aria-label="Mi perfil">
+                  <User size={16} className="shrink-0" /><span className="truncate">{userName || "Mi perfil"}</span>
+                </Link>
                 <Link
                   href="/mis-pedidos"
                   className="group relative rounded-full p-2 transition hover:bg-white/5"
@@ -270,6 +282,8 @@ export default function Navbar() {
               <div className="p-6 border-t border-scentia-border space-y-3">
                 {isAuthed ? (
                   <>
+                    {userName && <p className="pb-2 text-center text-sm text-scentia-muted">Hola, <span className="font-medium text-scentia-gold">{userName}</span></p>}
+                    <Link href="/perfil" className="flex items-center justify-center gap-2 w-full py-3 rounded-full border border-scentia-border text-scentia-text font-semibold"><User size={16} />Mi perfil</Link>
                     <Link href="/mis-pedidos" className="flex items-center justify-center gap-2 w-full py-3 rounded-full border border-scentia-gold/40 text-scentia-gold font-semibold"><PackageSearch size={16} />Mis pedidos</Link>
                     <Link
                       href="/dashboard"
