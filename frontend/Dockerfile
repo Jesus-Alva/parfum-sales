@@ -12,3 +12,13 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 EXPOSE 3000
 CMD ["npm", "run", "dev"]
+
+# Railway builds the last stage by default; keep the compose dev target above.
+FROM node:20-alpine AS production
+WORKDIR /app
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npm run build
+EXPOSE 3000
+CMD ["npm", "run", "start"]
