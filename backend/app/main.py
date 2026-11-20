@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
-from app.api.v1 import auth, users, perfumes, sales, dashboard, uploads, delivery_locations, backups, brands, reviews
+from app.api.v1 import auth, users, perfumes, sales, dashboard, uploads, delivery_locations, backups, brands, reviews, decanters
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -28,6 +28,7 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
 app.include_router(perfumes.router, prefix="/api/v1/perfumes", tags=["Perfumes"])
+app.include_router(decanters.router, prefix="/api/v1/decanters", tags=["Decanters"])
 app.include_router(brands.router, prefix="/api/v1/brands", tags=["Brands"])
 app.include_router(reviews.router, prefix="/api/v1", tags=["Reviews"])
 app.include_router(sales.router, prefix="/api/v1/sales", tags=["Sales"])

@@ -1,4 +1,4 @@
-from sqlalchemy import String, Float, Integer, Text, DateTime, ForeignKey, func
+from sqlalchemy import String, Float, Integer, Text, DateTime, ForeignKey, func, Boolean, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
 
@@ -7,6 +7,7 @@ from app.database import Base
 
 class Perfume(Base):
     __tablename__ = "perfumes"
+    __table_args__ = (UniqueConstraint("parent_perfume_id", "volume_ml", name="uq_perfume_decanter_parent_size"),)
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
@@ -17,6 +18,9 @@ class Perfume(Base):
     family: Mapped[str] = mapped_column(String(100), default="", index=True)
     notes: Mapped[str] = mapped_column(String(500), default="")
     volume_ml: Mapped[int] = mapped_column(Integer, default=100)
+    classification: Mapped[str] = mapped_column(String(30), default="regular", server_default="regular", nullable=False, index=True)
+    parent_perfume_id: Mapped[int | None] = mapped_column(ForeignKey("perfumes.id", ondelete="SET NULL"), nullable=True, index=True)
+    is_enabled: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true", nullable=False)
     price: Mapped[float] = mapped_column(Float, nullable=False, index=True)
     discount_percent: Mapped[float] = mapped_column(Float, default=0, server_default="0", nullable=False)
     cost: Mapped[float] = mapped_column(Float, nullable=False, default=0)
@@ -39,6 +43,8 @@ class Perfume(Base):
     )
 
     brand_record = relationship("Brand", back_populates="perfumes", lazy="joined")
+    parent_perfume = relationship("Perfume", remote_side="Perfume.id", back_populates="decanters", foreign_keys=[parent_perfume_id])
+    decanters = relationship("Perfume", back_populates="parent_perfume", foreign_keys=[parent_perfume_id], cascade="save-update, merge", lazy="selectin", order_by="Perfume.volume_ml")
     reviews = relationship(
         "PerfumeReview",
         back_populates="perfume",

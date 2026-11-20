@@ -26,7 +26,7 @@ export default function PerfumeShowcase() {
     setIsAuthed(!!getToken());
     api
       .get("/perfumes/")
-      .then((r) => setPerfumes(r.data.filter((p: any) => p.stock > 0).slice(0, 6)))
+      .then((r) => setPerfumes(r.data.filter((p: any) => p.stock > 0 || p.decanters?.some((variant: any) => variant.enabled && variant.stock > 0)).slice(0, 6)))
       .catch(() => { })
       .finally(() => setLoading(false));
   }, []);
@@ -39,6 +39,10 @@ export default function PerfumeShowcase() {
 
   const handleAddToCart = (e: React.MouseEvent, perfume: any) => {
     e.stopPropagation();   // 👈 evita que también navegue al detalle
+    if (perfume.stock <= 0 && perfume.decanters?.some((variant: any) => variant.enabled && variant.stock > 0)) {
+      router.push(`/perfumes/${perfume.id}`);
+      return;
+    }
     if (!getToken()) {
       setIsAuthed(false);
       router.push(`/login?next=/perfumes/${perfume.id}`);
@@ -51,6 +55,10 @@ export default function PerfumeShowcase() {
 
   const handleBuyNow = (e: React.MouseEvent, perfume: any) => {
     e.stopPropagation();
+    if (perfume.stock <= 0 && perfume.decanters?.some((variant: any) => variant.enabled && variant.stock > 0)) {
+      router.push(`/perfumes/${perfume.id}`);
+      return;
+    }
     if (!getToken()) {
       setIsAuthed(false);
       router.push(`/login?next=/perfumes/${perfume.id}`);
@@ -104,6 +112,7 @@ export default function PerfumeShowcase() {
               className="glass rounded-2xl p-6 relative group overflow-hidden cursor-pointer"
             >
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-500 bg-radial-gold pointer-events-none" />
+                {(p.classification === "decanter" || p.decanters?.some((variant: any) => variant.enabled)) && <span className="absolute top-4 left-4 z-10 rounded-full border border-scentia-gold/50 bg-black/75 px-3 py-1 text-xs text-scentia-gold">{p.classification === "decanter" ? `Decanter · ${p.volume_ml} ml` : `Decanter · ${p.decanters.filter((variant: any) => variant.enabled).map((variant: any) => `${variant.volume_ml} ml`).join(" / ")}`}</span>}
 
               {/* Indicador "Ver detalle" al hover */}
               <div className="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition">
@@ -145,13 +154,13 @@ export default function PerfumeShowcase() {
                   <div>
                     <PerfumePrice perfume={p} />
                     <p className="text-xs text-scentia-muted mt-1">
-                      {p.stock} disponibles
+                      {p.decanters?.some((variant: any) => variant.enabled) ? `${p.stock} disponibles · Decanter ${p.decanters.filter((variant: any) => variant.enabled).map((variant: any) => `${variant.volume_ml} ml`).join(" / ")}` : `${p.stock} disponibles`}
                     </p>
                   </div>
                   <div className="flex gap-2 relative z-20">
-                    <button type="button" onClick={(e) => handleBuyNow(e, p)} className="rounded-lg border border-scentia-gold/40 px-3 py-2 text-xs font-semibold text-scentia-gold hover:bg-scentia-gold/10 transition">Realizar pedido</button>
+                    <button type="button" onClick={(e) => handleBuyNow(e, p)} className="rounded-lg border border-scentia-gold/40 px-3 py-2 text-xs font-semibold text-scentia-gold hover:bg-scentia-gold/10 transition">{p.stock > 0 ? "Realizar pedido" : "Ver decanters"}</button>
                     <button type="button" onClick={(e) => handleAddToCart(e, p)} className="bg-gradient-to-r from-scentia-gold to-scentia-gold-soft text-black font-semibold px-3 py-2 rounded-lg hover:opacity-90 transition flex items-center gap-2">
-                      <ShoppingBag size={15} />{isAuthed ? "Agregar" : "Regístrate"}
+                      <ShoppingBag size={15} />{p.stock > 0 ? isAuthed ? "Agregar" : "Regístrate" : "Ver opciones"}
                     </button>
                   </div>
                 </div>

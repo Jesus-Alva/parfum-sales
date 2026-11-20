@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import Image from "next/image";
 import { Sparkles } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { getToken } from "@/lib/auth";
@@ -89,21 +90,36 @@ export default function WelcomeSplash() {
                 transition={{ duration: reducedMotion ? 0.2 : 0.55, ease: "easeOut" }}
                 className="relative flex h-28 w-28 items-center justify-center rounded-full bg-scentia-gold/20 text-scentia-gold shadow-[0_0_100px_50px_rgba(212,175,55,0.32)]"
               >
-                <Sparkles size={58} strokeWidth={1.4} />
+                <Sparkles size={98} strokeWidth={0.7} className="absolute opacity-25" />
+                <Image
+                  src="/images/brand/icon.png"
+                  alt=""
+                  width={201}
+                  height={207}
+                  className="relative h-20 w-20 object-contain drop-shadow-[0_0_22px_rgba(212,175,55,0.8)]"
+                  priority
+                />
               </motion.div>
             )}
 
             {phase === "brand" && (
-              <motion.h1
+              <motion.div
                 key="brand-text"
                 initial={{ opacity: 0, scale: reducedMotion ? 1 : 0.88, filter: "blur(10px)" }}
                 animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
                 exit={{ opacity: 0, scale: 1.04 }}
                 transition={{ duration: reducedMotion ? 0.2 : 0.7, ease: "easeOut" }}
-                className="relative font-display text-6xl text-gradient-gold sm:text-8xl"
+                className="relative h-[190px] w-[330px] sm:h-[250px] sm:w-[440px]"
               >
-                ScentiA
-              </motion.h1>
+                <Image
+                  src="/images/brand/logo-complete.png"
+                  alt="ScentiA"
+                  fill
+                  sizes="(max-width: 640px) 330px, 440px"
+                  className="object-contain"
+                  priority
+                />
+              </motion.div>
             )}
           </AnimatePresence>
         </motion.div>

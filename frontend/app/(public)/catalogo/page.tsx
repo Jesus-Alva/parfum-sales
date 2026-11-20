@@ -23,6 +23,7 @@ type Filters = {
     brand: string;
     family: string;
     tipo: string;
+    classification: string;
     min_price: string;
     max_price: string;
     in_stock: boolean;
@@ -35,6 +36,7 @@ const initialFilters: Filters = {
     brand: "",
     family: "",
     tipo: "",
+    classification: "",
     min_price: "",
     max_price: "",
     in_stock: false,
@@ -48,6 +50,7 @@ export default function CatalogPage() {
         brands: [],
         families: [],
         tipos: [],
+        classifications: ["regular", "decanter"],
         price_min: 0,
         price_max: 0,
     });
@@ -104,6 +107,10 @@ export default function CatalogPage() {
 
     const handleAddToCart = (event: React.MouseEvent, perfume: any) => {
         event.stopPropagation();
+        if (perfume.stock <= 0 && perfume.decanters?.some((variant: any) => variant.enabled && variant.stock > 0)) {
+            router.push(`/perfumes/${perfume.id}`);
+            return;
+        }
         if (!getToken()) {
             setIsAuthed(false);
             router.push(`/login?next=/perfumes/${perfume.id}`);
@@ -114,6 +121,10 @@ export default function CatalogPage() {
 
     const handleBuyNow = (event: React.MouseEvent, perfume: any) => {
         event.stopPropagation();
+        if (perfume.stock <= 0 && perfume.decanters?.some((variant: any) => variant.enabled && variant.stock > 0)) {
+            router.push(`/perfumes/${perfume.id}`);
+            return;
+        }
         if (!getToken()) {
             setIsAuthed(false);
             router.push(`/login?next=/perfumes/${perfume.id}`);
@@ -265,6 +276,19 @@ export default function CatalogPage() {
                             )}
 
                             {/* Tipo */}
+                            <FilterGroup label="Clasificación">
+                                <select
+                                    value={filters.classification}
+                                    onChange={(e) => update("classification", e.target.value)}
+                                    className="w-full bg-scentia-card border border-scentia-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-scentia-gold"
+                                >
+                                    <option value="">Todas</option>
+                                    <option value="regular">Perfumes</option>
+                                    <option value="decanter">Decanters</option>
+                                </select>
+                            </FilterGroup>
+
+                            {/* Tipo */}
                             {options.tipos.length > 0 && (
                                 <FilterGroup label="Tipo">
                                     <select
@@ -389,12 +413,19 @@ export default function CatalogPage() {
                                             )}
                                         </div>
 
+                                        {(p.classification === "decanter" || p.decanters?.some((variant: any) => variant.enabled)) && (
+                                            <span className="absolute top-3 left-3 rounded-full border border-scentia-gold/50 bg-black/75 px-3 py-1 text-xs font-medium text-scentia-gold">
+                                                {p.classification === "decanter" ? "Decanter" : "Incluye decanters"}
+                                            </span>
+                                        )}
+
                                         <p className="text-xs uppercase tracking-widest text-scentia-gold mb-1">
                                             <BrandLabel name={p.brand} logoUrl={p.brand_logo_url} />
                                         </p>
                                         <h3 className="font-display text-xl mb-1">{p.name}</h3>
                                         <p className="text-xs text-scentia-muted mb-3 line-clamp-1">
-                                            {p.family || p.tipo} · {p.volume_ml}ml
+                                            {p.classification === "decanter" ? "Decanter" : (p.family || p.tipo)} · {p.volume_ml}ml
+                                            {p.decanters?.some((variant: any) => variant.enabled) && ` · Decanter ${p.decanters.filter((variant: any) => variant.enabled).map((variant: any) => `${variant.volume_ml} ml`).join(" / ")}`}
                                         </p>
 
                                         <div className="flex items-center justify-between">
@@ -404,8 +435,8 @@ export default function CatalogPage() {
                                             </span>
                                         </div>
                                         <div className="mt-4 flex gap-2">
-                                            <button type="button" disabled={p.stock <= 0} onClick={(event) => handleBuyNow(event, p)} className="flex-1 rounded-lg border border-scentia-gold/40 px-2 py-2 text-sm text-scentia-gold transition hover:bg-scentia-gold/10 disabled:opacity-40">Realizar pedido</button>
-                                            <button type="button" disabled={p.stock <= 0} onClick={(event) => handleAddToCart(event, p)} className="flex-1 rounded-lg bg-gradient-to-r from-scentia-gold to-scentia-gold-soft px-2 py-2 text-sm font-semibold text-black transition hover:opacity-90 disabled:opacity-40">Agregar al carrito</button>
+                                            <button type="button" disabled={p.stock <= 0 && !p.decanters?.some((variant: any) => variant.enabled && variant.stock > 0)} onClick={(event) => handleBuyNow(event, p)} className="flex-1 rounded-lg border border-scentia-gold/40 px-2 py-2 text-sm text-scentia-gold transition hover:bg-scentia-gold/10 disabled:opacity-40">{p.stock <= 0 ? "Ver decanters" : "Realizar pedido"}</button>
+                                            <button type="button" disabled={p.stock <= 0 && !p.decanters?.some((variant: any) => variant.enabled && variant.stock > 0)} onClick={(event) => handleAddToCart(event, p)} className="flex-1 rounded-lg bg-gradient-to-r from-scentia-gold to-scentia-gold-soft px-2 py-2 text-sm font-semibold text-black transition hover:opacity-90 disabled:opacity-40">{p.stock <= 0 ? "Ver opciones" : "Agregar al carrito"}</button>
                                         </div>
                                     </motion.div>
                                 ))}

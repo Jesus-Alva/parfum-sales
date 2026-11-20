@@ -26,23 +26,39 @@ export default function PerfumeDetailView({ perfume }: { perfume: any }) {
   const router = useRouter();
   const [addedToCart, setAddedToCart] = useState(false);
   const [quickBuyItem, setQuickBuyItem] = useState<CartItem | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<number>(() => {
+    const firstInStockDecanter = perfume.decanters?.find((variant: any) => variant.enabled && variant.stock > 0);
+    return perfume.stock > 0 ? perfume.id : firstInStockDecanter?.id ?? perfume.id;
+  });
   const addToCart = useCartStore((state) => state.add);
+  const availableProducts = [
+    perfume,
+    ...(perfume.decanters || []).filter((variant: any) => variant.enabled),
+  ];
+  const selectedProduct = availableProducts.find((item: any) => item.id === selectedProductId) || perfume;
 
   // Galería: si tiene imágenes múltiples, usa perfume.images;
   // si no, cae al cover (image_url) como única imagen
-  const images =
+  const perfumeImages =
     perfume.images && perfume.images.length > 0
       ? perfume.images
       : perfume.image_url
         ? [{ id: 0, url: perfume.image_url, position: 0 }]
         : [];
+  const selectedImageUrl = selectedProduct.id === perfume.id
+    ? perfume.image_url
+    : selectedProduct.image_url || perfume.image_url;
+  const images = selectedProduct.id === perfume.id || !selectedProduct.image_url
+    ? perfumeImages
+    : [{ id: selectedProduct.id, url: selectedProduct.image_url, position: 0 }];
+  const galleryName = selectedProduct.id === perfume.id ? perfume.name : `${perfume.name} · Decanter ${selectedProduct.volume_ml} ml`;
 
   const handleAddToCart = () => {
     if (!getToken()) {
       router.push(`/login?next=/perfumes/${perfume.id}`);
       return;
     }
-    addToCart({ perfumeId: perfume.id, name: perfume.name, brand: perfume.brand, imageUrl: perfume.image_url || "", price: Number(perfume.discounted_price ?? perfume.price), stock: perfume.stock, quantity: 1 });
+    addToCart({ perfumeId: selectedProduct.id, name: galleryName, brand: perfume.brand, imageUrl: selectedImageUrl || "", price: Number(selectedProduct.discounted_price ?? selectedProduct.price), stock: selectedProduct.stock, quantity: 1 });
     setAddedToCart(true);
   };
 
@@ -51,10 +67,10 @@ export default function PerfumeDetailView({ perfume }: { perfume: any }) {
       router.push(`/login?next=/perfumes/${perfume.id}`);
       return;
     }
-    setQuickBuyItem({ perfumeId: perfume.id, name: perfume.name, brand: perfume.brand, imageUrl: perfume.image_url || "", price: Number(perfume.discounted_price ?? perfume.price), stock: perfume.stock, quantity: 1 });
+    setQuickBuyItem({ perfumeId: selectedProduct.id, name: galleryName, brand: perfume.brand, imageUrl: selectedImageUrl || "", price: Number(selectedProduct.discounted_price ?? selectedProduct.price), stock: selectedProduct.stock, quantity: 1 });
   };
 
-  const inStock = perfume.stock > 0;
+  const inStock = selectedProduct.stock > 0;
 
   // Animaciones reutilizables
   const fadeUp = {
@@ -72,7 +88,12 @@ export default function PerfumeDetailView({ perfume }: { perfume: any }) {
           transition={{ duration: 0.6 }}
         >
           <div className="sticky top-24">
-            <ImageGallery images={images} name={perfume.name} />
+            <div className="relative">
+              <ImageGallery key={selectedProduct.id} images={images} name={galleryName} />
+              <span className="absolute left-4 top-4 z-10 rounded-full border border-scentia-gold/50 bg-black/75 px-3 py-1 text-xs font-medium text-scentia-gold">
+                {selectedProduct.id === perfume.id ? `Perfume · ${perfume.volume_ml} ml` : `Decanter · ${selectedProduct.volume_ml} ml`}
+              </span>
+            </div>
 
             {/* Badge de disponibilidad */}
             <div className="mt-4 flex items-center gap-2">
@@ -86,7 +107,7 @@ export default function PerfumeDetailView({ perfume }: { perfume: any }) {
                   className={`w-1.5 h-1.5 rounded-full ${inStock ? "bg-green-400" : "bg-red-400"
                     }`}
                 />
-                {inStock ? `${perfume.stock} disponibles` : "Agotado"}
+                {inStock ? `${selectedProduct.stock} disponibles` : "Agotado"}
               </span>
             </div>
           </div>
@@ -135,11 +156,20 @@ export default function PerfumeDetailView({ perfume }: { perfume: any }) {
 
           {/* Precio */}
           <motion.div variants={fadeUp} className="flex flex-wrap items-baseline gap-3">
-            <PerfumePrice perfume={perfume} large />
+          <PerfumePrice perfume={selectedProduct} large />
             <span className="text-sm text-scentia-muted">
-              {perfume.volume_ml} ml
+              {selectedProduct.volume_ml} ml
+              {selectedProduct.id !== perfume.id && <span className="ml-2 rounded-full border border-scentia-gold/40 px-2 py-1 text-xs text-scentia-gold">Decanter</span>}
             </span>
           </motion.div>
+
+          {availableProducts.length > 1 && <motion.div variants={fadeUp}>
+            <label htmlFor="perfume-presentation" className="mb-2 block text-xs uppercase tracking-widest text-scentia-muted">Presentación</label>
+            <select id="perfume-presentation" value={selectedProduct.id} onChange={(event) => setSelectedProductId(Number(event.target.value))} className="w-full rounded-xl border border-scentia-border bg-scentia-card px-4 py-3 focus:border-scentia-gold focus:outline-none">
+              <option value={perfume.id} disabled={perfume.stock <= 0}>{perfume.volume_ml} ml · Frasco completo{perfume.stock <= 0 ? " · Agotado" : ""}</option>
+              {availableProducts.slice(1).map((variant: any) => <option key={variant.id} value={variant.id} disabled={variant.stock <= 0}>{variant.volume_ml} ml · Decanter{variant.stock <= 0 ? " · Agotado" : ""}</option>)}
+            </select>
+          </motion.div>}
 
           {/* Separador con brillo */}
           <motion.div

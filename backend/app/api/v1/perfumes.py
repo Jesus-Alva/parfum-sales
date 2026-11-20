@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import or_, func
+from sqlalchemy import or_, func, and_
 from typing import Optional
 
 from app.database import get_db
@@ -28,6 +28,29 @@ def _sync_images(db: Session, perfume: Perfume, urls: list[str]):
         perfume.image_url = urls[0]
 
 
+def _sync_inherited_decanter_fields(perfume: Perfume) -> None:
+    for decanter in perfume.decanters:
+        decanter.name = f"{perfume.name} · Decanter {decanter.volume_ml} ml"
+        decanter.brand = perfume.brand
+        decanter.brand_id = perfume.brand_id
+        decanter.description = perfume.description
+        decanter.gender = perfume.gender
+        decanter.family = perfume.family
+        decanter.notes = perfume.notes
+        decanter.tipo = perfume.tipo
+        decanter.perfil = perfume.perfil
+        decanter.estilo = perfume.estilo
+        decanter.uso = perfume.uso
+        decanter.presentacion = f"Decanter de {decanter.volume_ml} ml"
+        decanter.cost = round((float(perfume.cost or 0) / max(int(perfume.volume_ml or 1), 1)) * decanter.volume_ml, 2)
+
+
+def _public_perfume(perfume: Perfume):
+    data = PerfumeOut.model_validate(perfume).model_dump()
+    data["decanters"] = [variant for variant in data["decanters"] if variant["enabled"]]
+    return data
+
+
 @router.get("/", response_model=list[PerfumeOut])
 def list_perfumes(
     search: Optional[str] = Query(None, description="Busca en nombre, marca, notas"),
@@ -35,6 +58,7 @@ def list_perfumes(
     brand: Optional[str] = Query(None),
     family: Optional[str] = Query(None),
     tipo: Optional[str] = Query(None),
+    classification: Optional[str] = Query(None),
     min_price: Optional[float] = Query(None, ge=0),
     max_price: Optional[float] = Query(None, ge=0),
     in_stock: Optional[bool] = Query(None),
@@ -43,7 +67,7 @@ def list_perfumes(
     ),
     db: Session = Depends(get_db),
 ):
-    q = db.query(Perfume)
+    q = db.query(Perfume).filter(Perfume.parent_perfume_id.is_(None))
     sale_price = Perfume.price * (1 - Perfume.discount_percent / 100.0)
 
     if search:
@@ -70,6 +94,15 @@ def list_perfumes(
     if tipo:
         q = q.filter(Perfume.tipo == tipo)
 
+    if classification:
+        if classification == "decanter":
+            q = q.filter(or_(
+                Perfume.classification == "decanter",
+                Perfume.decanters.any(and_(Perfume.is_enabled.is_(True), Perfume.classification == "decanter")),
+            ))
+        else:
+            q = q.filter(Perfume.classification == classification)
+
     if min_price is not None:
         q = q.filter(sale_price >= min_price)
 
@@ -77,7 +110,10 @@ def list_perfumes(
         q = q.filter(sale_price <= max_price)
 
     if in_stock:
-        q = q.filter(Perfume.stock > 0)
+        q = q.filter(or_(
+            Perfume.stock > 0,
+            Perfume.decanters.any(and_(Perfume.is_enabled.is_(True), Perfume.stock > 0)),
+        ))
 
     # Ordenamiento
     if sort_by == "price_asc":
@@ -89,7 +125,7 @@ def list_perfumes(
     else:
         q = q.order_by(Perfume.created_at.desc())
 
-    return q.all()
+    return [_public_perfume(perfume) for perfume in q.all()]
 
 
 @router.get("/filters/options")
@@ -106,17 +142,30 @@ def filter_options(db: Session = Depends(get_db)):
         "brands": sorted(brands),
         "families": sorted(families),
         "tipos": sorted(tipos),
+        "classifications": ["regular", "decanter"],
         "price_min": float(price_range[0] or 0),
         "price_max": float(price_range[1] or 0),
     }
 
 
+@router.get("/{perfume_id}/admin", response_model=PerfumeOut)
+def get_perfume_for_admin(
+    perfume_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_admin),
+):
+    perfume = db.query(Perfume).filter(Perfume.id == perfume_id, Perfume.parent_perfume_id.is_(None)).first()
+    if not perfume:
+        raise HTTPException(404, "Perfume no encontrado")
+    return perfume
+
+
 @router.get("/{perfume_id}", response_model=PerfumeOut)
 def get_perfume(perfume_id: int, db: Session = Depends(get_db)):
     p = db.query(Perfume).filter(Perfume.id == perfume_id).first()
-    if not p:
+    if not p or not p.is_enabled:
         raise HTTPException(404, "Perfume no encontrado")
-    return p
+    return _public_perfume(p)
 
 
 @router.post("/", response_model=PerfumeOut, status_code=201)
@@ -156,7 +205,7 @@ def update_perfume(
     _: User = Depends(get_current_admin),
 ):
     p = db.query(Perfume).filter(Perfume.id == perfume_id).first()
-    if not p:
+    if not p or not p.is_enabled:
         raise HTTPException(404, "Perfume no encontrado")
 
     data = payload.model_dump(exclude_unset=True, exclude={"images"})
@@ -173,6 +222,8 @@ def update_perfume(
         _sync_images(db, p, payload.images)
         if payload.images and not p.image_url:
             p.image_url = payload.images[0]
+
+    _sync_inherited_decanter_fields(p)
 
     db.commit()
     db.refresh(p)

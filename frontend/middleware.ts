@@ -11,6 +11,7 @@ const ADMIN_PATTERNS = [
   /^\/perfumes\/?$/,              // solo la lista del panel
   /^\/brands(\/|$)/,
   /^\/users(\/|$)/,
+  /^\/decanters(\/|$)/,
   /^\/perfumes\/new(\/|$)/,
   /^\/perfumes\/\d+\/edit(\/|$)/,
 ];

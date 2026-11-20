@@ -7,6 +7,7 @@ import logging
 from app.database import get_db
 from app.api.deps import get_current_admin, get_current_user, get_optional_user
 from app.models.sale import Sale
+from app.models.perfume import Perfume
 from app.models.user import User
 from app.schemas.sale import SaleCreate, SaleOut
 from app.services.sale_service import create_sale
@@ -27,6 +28,7 @@ def register_sale(payload: SaleCreate, db: Session = Depends(get_db), current: U
     # The sale has committed already. A broker outage must not make the client
     # believe the order failed and submit a duplicate purchase.
     try:
+        location = sale.preferred_delivery_location
         notify_new_sale.delay({
             "folio": sale.folio,
             "items": [
@@ -38,7 +40,13 @@ def register_sale(payload: SaleCreate, db: Session = Depends(get_db), current: U
             "buyer_phone": sale.buyer_phone,
             "address": f"{sale.address.street} {sale.address.number}, {sale.address.city}",
             "delivery_type": sale.delivery_type,
-            "preferred_location": sale.preferred_delivery_location.name if sale.preferred_delivery_location else "Por paquetería",
+            "preferred_location": location.name if location else "Por paquetería",
+            "preferred_delivery_address": ", ".join(
+                part for part in (location.address, location.city, location.state) if part
+            ) if location else "",
+            "delivery_day": location.delivery_day if location else None,
+            "delivery_start_time": location.delivery_start_time.strftime("%H:%M") if location and location.delivery_start_time else None,
+            "delivery_end_time": location.delivery_end_time.strftime("%H:%M") if location and location.delivery_end_time else None,
         })
     except Exception:
         logger.exception("No se pudo enviar la notificación de Telegram para la venta %s", sale.folio)
@@ -60,7 +68,7 @@ def list_sales(
 
 @router.get("/orders", response_model=list[SaleOut])
 def list_orders(db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
-    return db.query(Sale).filter(Sale.status != "delivered").order_by(Sale.created_at.desc()).all()
+    return db.query(Sale).filter(Sale.status.notin_(("delivered", "cancelled"))).order_by(Sale.created_at.desc()).all()
 
 
 @router.get("/orders/folio/{folio}", response_model=SaleOut)
@@ -87,7 +95,7 @@ class DeliveryConfirmation(BaseModel):
 @router.patch("/{sale_id}/delivery", response_model=SaleOut)
 def confirm_delivery(sale_id: int, payload: DeliveryConfirmation, db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
     sale = db.query(Sale).filter(Sale.id == sale_id).first()
-    if not sale or sale.status == "delivered":
+    if not sale or sale.status in {"delivered", "cancelled"}:
         raise HTTPException(404, "Pedido pendiente no encontrado")
     if sale.delivery_type == "local":
         location_id = payload.delivery_location_id or sale.preferred_delivery_location_id
@@ -110,10 +118,16 @@ def confirm_delivery(sale_id: int, payload: DeliveryConfirmation, db: Session = 
                 "buyer_name": sale.buyer_name,
                 "buyer_phone": sale.buyer_phone,
                 "location": sale.delivery_location.name,
-                "address": sale.delivery_location.address,
+                "address": ", ".join(
+                    part for part in (sale.delivery_location.address, sale.delivery_location.city, sale.delivery_location.state) if part
+                ),
                 "delivery_day": sale.delivery_location.delivery_day,
                 "delivery_start_time": sale.delivery_location.delivery_start_time.strftime("%H:%M"),
                 "delivery_end_time": sale.delivery_location.delivery_end_time.strftime("%H:%M"),
+                "items": [
+                    {"name": item.perfume.name, "quantity": item.quantity}
+                    for item in sale.items
+                ],
             })
         except Exception:
             logger.exception("No se pudo encolar la notificación de entrega para el pedido %s", sale.folio)
@@ -123,11 +137,46 @@ def confirm_delivery(sale_id: int, payload: DeliveryConfirmation, db: Session = 
 @router.post("/{sale_id}/complete", response_model=SaleOut)
 def complete_delivery(sale_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
     sale = db.query(Sale).filter(Sale.id == sale_id).first()
-    if not sale or sale.status == "delivered":
+    if not sale or sale.status in {"delivered", "cancelled"}:
         raise HTTPException(404, "Pedido pendiente no encontrado")
     if sale.delivery_type == "local" and sale.status != "ready_for_delivery":
         raise HTTPException(400, "Confirma primero la ubicación y el horario de entrega")
     sale.status = "delivered"
+    db.commit()
+    db.refresh(sale)
+    return sale
+
+
+@router.post("/{sale_id}/cancel", response_model=SaleOut)
+def cancel_sale(
+    sale_id: int,
+    db: Session = Depends(get_db),
+    current: User = Depends(get_current_user),
+):
+    sale = db.query(Sale).filter(Sale.id == sale_id).with_for_update().first()
+    if not sale:
+        raise HTTPException(404, "Pedido no encontrado")
+    if not current.is_admin and sale.user_id != current.id:
+        raise HTTPException(404, "Pedido no encontrado")
+    if sale.status == "cancelled":
+        raise HTTPException(400, "El pedido ya está cancelado")
+    if sale.status == "delivered":
+        raise HTTPException(400, "No se puede cancelar un pedido ya entregado")
+
+    if sale.items:
+        for item in sale.items:
+            db.query(Perfume).filter(Perfume.id == item.perfume_id).update(
+                {Perfume.stock: Perfume.stock + item.quantity},
+                synchronize_session=False,
+            )
+    else:
+        # Older orders may predate the SaleItem table and store one perfume on Sale.
+        db.query(Perfume).filter(Perfume.id == sale.perfume_id).update(
+            {Perfume.stock: Perfume.stock + sale.quantity},
+            synchronize_session=False,
+        )
+
+    sale.status = "cancelled"
     db.commit()
     db.refresh(sale)
     return sale
@@ -159,8 +208,8 @@ def update_sale_status(
     s = db.query(Sale).filter(Sale.id == sale_id).first()
     if not s:
         raise HTTPException(404, "Venta no encontrada")
-    if s.status == "delivered":
-        raise HTTPException(400, "Una venta finalizada no puede volver a pedido")
+    if s.status in {"delivered", "cancelled"}:
+        raise HTTPException(400, "Una venta finalizada o cancelada no puede cambiar de estado")
     if payload.status == "delivered":
         if s.delivery_type == "local" and s.status != "ready_for_delivery":
             raise HTTPException(400, "Confirma primero la ubicación y el horario de entrega")

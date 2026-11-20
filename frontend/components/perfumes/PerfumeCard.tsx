@@ -74,6 +74,8 @@ export default function PerfumeCard({
         <BrandLabel name={perfume.brand} logoUrl={perfume.brand_logo_url} />
       </p>
       <h3 className="font-display text-xl mb-1">{perfume.name}</h3>
+      {perfume.classification === "decanter" && <span className="mb-2 inline-block rounded-full border border-scentia-gold/40 px-2 py-0.5 text-xs text-scentia-gold">Decanter</span>}
+      {perfume.decanters?.some((variant: any) => variant.enabled) && <p className="mb-2 text-xs text-scentia-gold">Decanters activos: {perfume.decanters.filter((variant: any) => variant.enabled).map((variant: any) => `${variant.volume_ml} ml`).join(" · ")}</p>}
       <p className="text-xs text-scentia-muted mb-3">
         {perfume.gender} · {perfume.volume_ml}ml · stock {perfume.stock}
       </p>

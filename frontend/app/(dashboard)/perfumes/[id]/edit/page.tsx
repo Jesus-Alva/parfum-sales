@@ -12,7 +12,7 @@ export default function EditPerfumePage() {
   useEffect(() => {
     if (!id) return;
     api
-      .get(`/perfumes/${id}`)
+      .get(`/perfumes/${id}/admin`)
       .then((r) => setPerfume(r.data))
       .catch((e) => setError(e?.response?.data?.detail || "No encontrado"));
   }, [id]);

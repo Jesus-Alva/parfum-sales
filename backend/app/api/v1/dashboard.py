@@ -16,8 +16,8 @@ def stats(db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
     completed_sales = Sale.status == "delivered"
     total_sales = db.query(func.count(Sale.id)).filter(completed_sales).scalar() or 0
     total_revenue = db.query(func.coalesce(func.sum(Sale.total), 0)).filter(completed_sales).scalar() or 0
-    total_perfumes = db.query(func.count(Perfume.id)).scalar() or 0
-    low_stock = db.query(func.count(Perfume.id)).filter(Perfume.stock <= 3).scalar() or 0
+    total_perfumes = db.query(func.count(Perfume.id)).filter(Perfume.parent_perfume_id.is_(None)).scalar() or 0
+    low_stock = db.query(func.count(Perfume.id)).filter(Perfume.stock <= 3, Perfume.is_enabled.is_(True)).scalar() or 0
 
     # Ventas por día (últimos 14 días)
     sales_by_day = (
@@ -47,7 +47,7 @@ def stats(db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
 @router.get("/costs")
 def costs(db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
     """Costo vs precio vs ganancia por perfume."""
-    perfumes = db.query(Perfume).all()
+    perfumes = db.query(Perfume).filter(Perfume.is_enabled.is_(True)).all()
     return [
         {
             "name": p.name,

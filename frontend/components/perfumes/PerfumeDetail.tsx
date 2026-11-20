@@ -28,6 +28,7 @@ export default function PerfumeDetail({ perfume }: { perfume: any }) {
           <div><span className="text-scentia-muted">Género:</span> {perfume.gender}</div>
           <div><span className="text-scentia-muted">Familia:</span> {perfume.family}</div>
           <div><span className="text-scentia-muted">Volumen:</span> {perfume.volume_ml} ml</div>
+          {perfume.classification === "decanter" && <div><span className="text-scentia-muted">Presentación:</span> Decanter</div>}
           <div><span className="text-scentia-muted">Stock:</span> {perfume.stock}</div>
           <div className="col-span-2">
             <PerfumePrice perfume={perfume} />

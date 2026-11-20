@@ -1,5 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { Sparkles, Shield, Truck, Bell } from "lucide-react";
 
 const features = [
@@ -13,7 +14,7 @@ export default function Features() {
   return (
     <section className="py-24 px-6 bg-gradient-to-b from-transparent to-scentia-card/40">
       <h2 className="font-display text-4xl text-center mb-16">
-        ¿Por qué <span className="text-gradient-gold">Scentia</span>?
+        ¿Por qué <Image src="/images/brand/wordmark.png" alt="ScentiA" width={658} height={154} className="inline-block h-8 w-[136px] align-middle" />?
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
         {features.map((f, i) => (

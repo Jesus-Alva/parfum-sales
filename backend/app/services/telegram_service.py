@@ -26,10 +26,22 @@ def send_telegram_message(text: str) -> bool:
     try:
         with httpx.Client(timeout=10) as client:
             r = client.post(url, json=payload)
-            r.raise_for_status()
+            if not r.is_success:
+                try:
+                    details = r.json()
+                except ValueError:
+                    details = {}
+                description = str(details.get("description", ""))[:200]
+                logger.error(
+                    "Telegram rechazó el envío (HTTP %s, código %s): %s",
+                    r.status_code,
+                    details.get("error_code", "desconocido"),
+                    description or "sin descripción",
+                )
+                return False
             return True
     except Exception as exc:
         # Do not log the exception itself: HTTP client errors may include the
         # bot token in the Telegram API URL.
-        logger.error("Falló el envío a Telegram (%s)", type(exc).__name__)
+        logger.error("Falló la conexión con Telegram (%s)", type(exc).__name__)
         return False

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ShoppingBag, User, LogOut, LayoutDashboard, PackageSearch } from "lucide-react";
@@ -114,12 +115,12 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="relative group">
-            <motion.span
+            <motion.div
               whileHover={{ scale: 1.05 }}
-              className="font-display text-2xl md:text-3xl text-gradient-gold block"
+              className="block h-8 w-[132px] md:h-9 md:w-[154px]"
             >
-              ScentiA
-            </motion.span>
+              <Image src="/images/brand/wordmark.png" alt="ScentiA" width={658} height={154} priority className="h-full w-full object-contain" />
+            </motion.div>
             <motion.span
               className="absolute -bottom-1 left-0 h-[2px] bg-gradient-to-r from-scentia-gold to-transparent"
               initial={{ width: 0 }}
@@ -252,7 +253,7 @@ export default function Navbar() {
               className="fixed top-0 right-0 h-full w-[80%] max-w-sm bg-scentia-card border-l border-scentia-border z-50 md:hidden flex flex-col"
             >
               <div className="flex items-center justify-between p-6 border-b border-scentia-border">
-                <span className="font-display text-2xl text-gradient-gold">Scentia</span>
+                <Image src="/images/brand/wordmark.png" alt="ScentiA" width={658} height={154} className="h-8 w-[136px] object-contain" />
                 <button
                   onClick={() => setMobileOpen(false)}
                   className="p-2 rounded-lg hover:bg-white/5"

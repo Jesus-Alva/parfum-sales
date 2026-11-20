@@ -29,6 +29,8 @@ def create_sale(db: Session, payload: SaleCreate, user_id: int | None = None) ->
     if len(perfumes_by_id) != len(quantities):
         raise ValueError("Uno o más perfumes no existen")
     for perfume_id, quantity in quantities.items():
+        if not perfumes_by_id[perfume_id].is_enabled:
+            raise ValueError(f"La presentación {perfumes_by_id[perfume_id].name} ya no está disponible")
         if perfumes_by_id[perfume_id].stock < quantity:
             raise ValueError(f"Stock insuficiente para {perfumes_by_id[perfume_id].name}")
 

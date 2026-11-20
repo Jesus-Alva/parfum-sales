@@ -7,7 +7,7 @@ import MultiImageUpload from "./MultiImageUpload";
 
 const empty = {
   name: "", brand: "", brand_id: "", description: "", gender: "unisex",
-  family: "", notes: "", volume_ml: 100, price: 0, discount_percent: 0, cost: 0,
+  family: "", notes: "", classification: "regular", volume_ml: 100, price: 0, discount_percent: 0, cost: 0,
   stock: 0, image_url: "",
   tipo: "", perfil: "", estilo: "", uso: "", presentacion: "",
 };
@@ -63,8 +63,10 @@ export default function PerfumeForm({ perfume }: { perfume?: any }) {
       let finalCover = coverUrl;
       if (!finalCover && allUrls.length > 0) finalCover = allUrls[0];
 
+      const perfumeFields = { ...form };
+      delete perfumeFields.decanters;
       const payload = {
-        ...form,
+        ...perfumeFields,
         brand_id: Number(form.brand_id),
         brand: brands.find((brand) => brand.id === Number(form.brand_id))?.name || form.brand,
         image_url: finalCover,
@@ -123,7 +125,7 @@ export default function PerfumeForm({ perfume }: { perfume?: any }) {
         </div>
         <div>
           <label className="block text-sm mb-1">Volumen (ml)</label>
-          <input type="number" className={input} value={form.volume_ml} onChange={(e) => update("volume_ml", e.target.value)} />
+          <input type="number" min="1" className={input} value={form.volume_ml} onChange={(e) => update("volume_ml", e.target.value)} />
         </div>
         <div>
           <label className="block text-sm mb-1">Stock</label>
