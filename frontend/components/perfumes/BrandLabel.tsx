@@ -15,15 +15,14 @@ export default function BrandLabel({
       {logoUrl && (
         <Image
           src={imageUrl(logoUrl)}
-          alt=""
-          aria-hidden="true"
+          alt={`Logotipo de ${name}`}
           width={80}
           height={28}
           unoptimized
           className={`${large ? "h-7 max-w-20" : "h-5 max-w-12"} shrink-0 object-contain`}
         />
       )}
-      <span className="truncate">{name}</span>
+      <span className="truncate" aria-hidden={Boolean(logoUrl)}>{name}</span>
     </span>
   );
 }

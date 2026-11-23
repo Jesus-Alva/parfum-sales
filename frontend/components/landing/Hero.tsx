@@ -148,7 +148,7 @@ export default function Hero() {
           transition={{ duration: 1, delay: 0.2 }}
           className="font-display text-6xl md:text-8xl leading-none mb-6 drop-shadow-[0_0_30px_rgba(212,175,55,0.4)]"
         >
-          <span className="text-gradient-gold">ScentiA</span>
+          <span className="text-gradient-gold">Perfumes de alta gama</span>
         </motion.h1>
 
         <motion.p
@@ -157,8 +157,8 @@ export default function Hero() {
           transition={{ duration: 1, delay: 0.4 }}
           className="text-lg md:text-xl text-scentia-text/90 max-w-2xl mx-auto mb-10 drop-shadow-lg"
         >
-          Fragancias que cuentan historias. Descubre, elige y registra tu compra
-          en un clic con confirmación inmediata.
+          Descubre perfumes originales de diseñador, fragancias exclusivas y
+          decanters para encontrar tu esencia ideal en ScentiA.
         </motion.p>
 
         <motion.div
