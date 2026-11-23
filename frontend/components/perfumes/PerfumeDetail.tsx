@@ -1,5 +1,4 @@
 "use client";
-import { imageUrl } from "@/lib/api";
 import ImageGallery from "./ImageGallery";
 import BrandLabel from "@/components/perfumes/BrandLabel";
 import PerfumePrice from "@/components/perfumes/PerfumePrice";

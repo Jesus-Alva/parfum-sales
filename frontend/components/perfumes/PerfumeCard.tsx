@@ -1,7 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Pencil, Trash2 } from "lucide-react";
 import { api, imageUrl } from "@/lib/api";
 import BrandLabel from "@/components/perfumes/BrandLabel";
@@ -14,8 +14,6 @@ export default function PerfumeCard({
   perfume: any;
   onDelete?: (id: number) => void;
 }) {
-  const router = useRouter();
-
   const handleDelete = async () => {
     if (!confirm(`¿Eliminar "${perfume.name}"?`)) return;
     try {
@@ -52,9 +50,12 @@ export default function PerfumeCard({
       {/* Imagen */}
       <div className="aspect-square rounded-xl mb-4 bg-gradient-to-br from-scentia-card to-scentia-bg flex items-center justify-center overflow-hidden relative">
         {perfume.image_url ? (
-          <img
+          <Image
             src={imageUrl(perfume.image_url)}
             alt={perfume.name}
+            fill
+            unoptimized
+            sizes="(max-width: 768px) 100vw, 33vw"
             className="w-full h-full object-cover group-hover:scale-105 transition duration-700"
           />
         ) : (

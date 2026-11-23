@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Star } from "lucide-react";
 import { api } from "@/lib/api";
@@ -33,14 +33,14 @@ export default function PerfumeReviews({ perfumeId }: { perfumeId: number }) {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const loadReviews = async () => {
+  const loadReviews = useCallback(async () => {
     const response = await api.get<ReviewsResponse>(`/perfumes/${perfumeId}/reviews`);
     setData(response.data);
     if (response.data.my_review) {
       setRating(response.data.my_review.rating);
       setComment(response.data.my_review.comment);
     }
-  };
+  }, [perfumeId]);
 
   useEffect(() => {
     const syncAuth = () => setIsAuthed(!!getToken());
@@ -54,7 +54,7 @@ export default function PerfumeReviews({ perfumeId }: { perfumeId: number }) {
     loadReviews()
       .catch((err) => setError(err?.response?.data?.detail || "No se pudieron cargar las reseñas."))
       .finally(() => setLoading(false));
-  }, [perfumeId]);
+  }, [loadReviews]);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

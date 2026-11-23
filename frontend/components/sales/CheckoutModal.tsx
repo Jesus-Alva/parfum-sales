@@ -38,7 +38,7 @@ export default function CheckoutModal({
   });
   const [locations, setLocations] = useState<any[]>([]);
   const [businessAddress, setBusinessAddress] = useState({ city: "", state: "" });
-  const [businessCoordinates, setBusinessCoordinates] = useState<{ latitude: number; longitude: number } | null>(BUSINESS_MAP_CENTER);
+  const businessCoordinates = BUSINESS_MAP_CENTER;
   const [preferredLocationId, setPreferredLocationId] = useState("");
   const [addressSaved, setAddressSaved] = useState(false);
   const [loading, setLoading] = useState(false);

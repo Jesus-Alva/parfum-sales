@@ -72,7 +72,6 @@ export default function InteractiveMap({ latitude, longitude, initialCenter = DE
       markerRef.current = null;
     };
   // The map instance is initialized once; later coordinate changes are handled below.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

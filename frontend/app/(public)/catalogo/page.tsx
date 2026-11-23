@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { api, imageUrl } from "@/lib/api";
 import { getToken } from "@/lib/auth";
@@ -13,8 +14,6 @@ import {
     Search,
     SlidersHorizontal,
     X,
-    ShoppingBag,
-    Star,
 } from "lucide-react";
 
 type Filters = {
@@ -57,20 +56,12 @@ export default function CatalogPage() {
     const [filters, setFilters] = useState<Filters>(initialFilters);
     const [loading, setLoading] = useState(true);
     const [showFilters, setShowFilters] = useState(false);
-    const [isAuthed, setIsAuthed] = useState(false);
     const [quickBuyItem, setQuickBuyItem] = useState<CartItem | null>(null);
     const addToCart = useCartStore((state) => state.add);
 
     // Cargar opciones de filtro una vez
     useEffect(() => {
-        setIsAuthed(!!getToken());
         api.get("/perfumes/filters/options").then((r) => setOptions(r.data)).catch(() => { });
-    }, []);
-
-    useEffect(() => {
-        const syncAuth = () => setIsAuthed(!!getToken());
-        window.addEventListener("scentia:auth-change", syncAuth);
-        return () => window.removeEventListener("scentia:auth-change", syncAuth);
     }, []);
 
     // Cargar perfumes cada vez que cambien los filtros (con debounce)
@@ -112,7 +103,6 @@ export default function CatalogPage() {
             return;
         }
         if (!getToken()) {
-            setIsAuthed(false);
             router.push(`/login?next=/perfumes/${perfume.id}`);
             return;
         }
@@ -126,7 +116,6 @@ export default function CatalogPage() {
             return;
         }
         if (!getToken()) {
-            setIsAuthed(false);
             router.push(`/login?next=/perfumes/${perfume.id}`);
             return;
         }
@@ -394,9 +383,12 @@ export default function CatalogPage() {
                                     >
                                         <div className="aspect-square rounded-xl mb-4 bg-gradient-to-br from-scentia-card to-scentia-bg flex items-center justify-center overflow-hidden relative">
                                             {p.image_url ? (
-                                                <img
+                                                <Image
                                                     src={imageUrl(p.image_url)}
                                                     alt={p.name}
+                                                    fill
+                                                    unoptimized
+                                                    sizes="(max-width: 768px) 100vw, 33vw"
                                                     className="w-full h-full object-cover group-hover:scale-105 transition duration-700"
                                                 />
                                             ) : (

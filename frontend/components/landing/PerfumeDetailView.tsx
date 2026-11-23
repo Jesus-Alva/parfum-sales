@@ -9,10 +9,7 @@ import {
   Droplets,
   Sparkles,
   Tag,
-  Package,
-  User as UserIcon,
 } from "lucide-react";
-import { imageUrl } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import ImageGallery from "@/components/perfumes/ImageGallery";
 import { useCartStore } from "@/store/cartStore";
@@ -312,28 +309,6 @@ export default function PerfumeDetailView({ perfume }: { perfume: any }) {
       <PerfumeReviews perfumeId={perfume.id} />
       {quickBuyItem && <CheckoutModal items={[quickBuyItem]} onClose={() => setQuickBuyItem(null)} onComplete={() => undefined} />}
     </>
-  );
-}
-
-function Spec({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string | number;
-}) {
-  return (
-    <div className="flex items-start gap-2">
-      <span className="text-scentia-gold mt-0.5">{icon}</span>
-      <div className="min-w-0">
-        <p className="text-[10px] uppercase tracking-widest text-scentia-muted">
-          {label}
-        </p>
-        <p className="text-sm truncate">{value}</p>
-      </div>
-    </div>
   );
 }
 

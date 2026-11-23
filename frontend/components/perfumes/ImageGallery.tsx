@@ -1,8 +1,11 @@
 "use client";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { imageUrl } from "@/lib/api";
+
+const MotionImage = motion(Image);
 
 export default function ImageGallery({ images, name }: { images: any[]; name: string }) {
   const [active, setActive] = useState(0);
@@ -23,14 +26,17 @@ export default function ImageGallery({ images, name }: { images: any[]; name: st
   return (
     <>
       {/* Imagen principal */}
-      <div className="relative group">
-        <motion.img
+      <div className="relative group aspect-square">
+        <MotionImage
           key={current.id}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           src={imageUrl(current.url)}
           alt={name}
-          className="w-full aspect-square object-cover rounded-2xl cursor-zoom-in"
+          fill
+          unoptimized
+          sizes="(max-width: 768px) 100vw, 50vw"
+          className="object-cover rounded-2xl cursor-zoom-in"
           onClick={() => setLightbox(true)}
         />
 
@@ -65,7 +71,7 @@ export default function ImageGallery({ images, name }: { images: any[]; name: st
                   : "border-transparent hover:border-scentia-gold/40"
               }`}
             >
-              <img src={imageUrl(img.url)} alt="" className="w-full h-full object-cover" />
+              <Image src={imageUrl(img.url)} alt="" width={64} height={64} unoptimized className="w-full h-full object-cover" />
             </button>
           ))}
         </div>
@@ -105,12 +111,16 @@ export default function ImageGallery({ images, name }: { images: any[]; name: st
               </>
             )}
 
-            <motion.img
+            <MotionImage
               key={current.id}
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               src={imageUrl(current.url)}
               alt={name}
+              width={1200}
+              height={1200}
+              unoptimized
+              sizes="90vw"
               className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg"
               onClick={(e) => e.stopPropagation()}
             />

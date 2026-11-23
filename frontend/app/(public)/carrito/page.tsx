@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { imageUrl } from "@/lib/api";
@@ -49,7 +50,7 @@ export default function CartPage() {
                   className="glass flex gap-4 rounded-2xl p-4"
                 >
                   <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-scentia-card">
-                    {item.imageUrl ? <img src={imageUrl(item.imageUrl)} alt={item.name} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center font-display text-3xl text-scentia-gold/40">S</div>}
+                    {item.imageUrl ? <Image src={imageUrl(item.imageUrl)} alt={item.name} width={96} height={96} unoptimized className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center font-display text-3xl text-scentia-gold/40">S</div>}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs uppercase tracking-widest text-scentia-gold">{item.brand}</p>

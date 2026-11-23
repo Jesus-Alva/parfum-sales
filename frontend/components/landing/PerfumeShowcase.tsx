@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { api, imageUrl } from "@/lib/api";
 import { getToken } from "@/lib/auth";
@@ -125,9 +126,12 @@ export default function PerfumeShowcase() {
               <div className="relative">
                 <div className="aspect-square rounded-xl mb-5 overflow-hidden bg-gradient-to-br from-scentia-card to-scentia-bg flex items-center justify-center">
                   {p.image_url ? (
-                    <img
+                    <Image
                       src={imageUrl(p.image_url)}
                       alt={p.name}
+                      fill
+                      unoptimized
+                      sizes="(max-width: 768px) 100vw, 33vw"
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-700"
                     />
                   ) : (

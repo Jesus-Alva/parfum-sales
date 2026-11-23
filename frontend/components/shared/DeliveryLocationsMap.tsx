@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type { CircleMarker, LayerGroup, Map as LeafletMap } from "leaflet";
 
 type DeliveryLocation = {
@@ -30,6 +30,36 @@ export default function DeliveryLocationsMap({ locations, selectedLocationId, in
   locationsRef.current = locations;
   selectedIdRef.current = selectedLocationId;
 
+  const renderMarkers = useCallback((leaflet: typeof import("leaflet"), map: LeafletMap, layer: LayerGroup) => {
+    layer.clearLayers();
+    const points: [number, number][] = [];
+    locationsRef.current.forEach((location) => {
+      const point: [number, number] = [location.latitude, location.longitude];
+      points.push(point);
+      const selected = String(location.id) === selectedIdRef.current;
+      const marker: CircleMarker = leaflet.circleMarker(point, {
+        radius: selected ? 10 : 8,
+        color: "#171717",
+        weight: 2,
+        fillColor: selected ? "#d4af37" : "#f8f5eb",
+        fillOpacity: 1,
+      }).addTo(layer);
+      const label = document.createElement("span");
+      label.textContent = `${location.name} · ${location.address}`;
+      marker.bindTooltip(label, { direction: "top", offset: [0, -8] });
+      marker.on("click", () => onSelectRef.current(String(location.id)));
+    });
+
+    if (selectedIdRef.current) {
+      const selected = locationsRef.current.find((location) => String(location.id) === selectedIdRef.current);
+      if (selected) map.setView([selected.latitude, selected.longitude], 15, { animate: true });
+    } else if (points.length > 1) {
+      map.fitBounds(leaflet.latLngBounds(points), { padding: [24, 24], maxZoom: 14 });
+    } else if (points.length === 1) {
+      map.setView(points[0], 14);
+    }
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -52,44 +82,13 @@ export default function DeliveryLocationsMap({ locations, selectedLocationId, in
       mapRef.current = null;
       markersRef.current = null;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [initialCenter.latitude, initialCenter.longitude, renderMarkers]);
 
   useEffect(() => {
     import("leaflet").then((leaflet) => {
       if (mapRef.current && markersRef.current) renderMarkers(leaflet, mapRef.current, markersRef.current);
     });
-  }, [locations, selectedLocationId]);
-
-  function renderMarkers(leaflet: typeof import("leaflet"), map: LeafletMap, layer: LayerGroup) {
-    layer.clearLayers();
-    const points: [number, number][] = [];
-    locationsRef.current.forEach((location) => {
-      const point: [number, number] = [location.latitude, location.longitude];
-      points.push(point);
-      const selected = String(location.id) === selectedIdRef.current;
-      const marker: CircleMarker = leaflet.circleMarker(point, {
-        radius: selected ? 10 : 8,
-        color: "#171717",
-        weight: 2,
-        fillColor: selected ? "#d4af37" : "#f8f5eb",
-        fillOpacity: 1,
-      }).addTo(layer);
-      const label = document.createElement("span");
-      label.textContent = `${location.name} · ${location.address}`;
-      marker.bindTooltip(label, { direction: "top", offset: [0, -8] });
-      marker.on("click", () => onSelectRef.current(String(location.id)));
-    });
-
-    if (selectedLocationId) {
-      const selected = locationsRef.current.find((location) => String(location.id) === selectedLocationId);
-      if (selected) map.setView([selected.latitude, selected.longitude], 15, { animate: true });
-    } else if (points.length > 1) {
-      map.fitBounds(leaflet.latLngBounds(points), { padding: [24, 24], maxZoom: 14 });
-    } else if (points.length === 1) {
-      map.setView(points[0], 14);
-    }
-  }
+  }, [locations, selectedLocationId, renderMarkers]);
 
   return (
     <div className="overflow-hidden rounded-xl border border-scentia-border bg-scentia-card">

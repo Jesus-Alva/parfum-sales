@@ -1,5 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
+import Image from "next/image";
 import { Upload, X, Star } from "lucide-react";
 import { imageUrl } from "@/lib/api";
 
@@ -124,9 +125,12 @@ export default function MultiImageUpload({
           {/* Existentes (ya en BD) */}
           {existing.map((img) => (
             <div key={`existing-${img.id}`} className="relative group aspect-square">
-              <img
+              <Image
                 src={imageUrl(img.url)}
                 alt=""
+                width={300}
+                height={300}
+                unoptimized
                 className="w-full h-full object-cover rounded-lg border border-scentia-border"
               />
               {coverUrl === img.url && (
@@ -160,9 +164,12 @@ export default function MultiImageUpload({
           {/* Nuevas (locales, aún no subidas) */}
           {newFiles.map((file, i) => (
             <div key={`new-${i}-${file.name}`} className="relative group aspect-square">
-              <img
+              <Image
                 src={URL.createObjectURL(file)}
                 alt=""
+                width={300}
+                height={300}
+                unoptimized
                 className="w-full h-full object-cover rounded-lg border border-scentia-gold/40"
               />
               <span className="absolute top-1 left-1 bg-scentia-gold-soft text-black text-[10px] font-bold px-1.5 py-0.5 rounded z-10">

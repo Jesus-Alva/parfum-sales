@@ -1,5 +1,6 @@
 // app/layout.tsx
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import "./globals.css";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import GoogleAnalyticsPageTracker from "@/components/GoogleAnalyticsPageTracker";
@@ -17,7 +18,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Scripts al final del body para asegurar SSR */}
         <GoogleAnalytics />
         {/* Este componente debe enviar el page_view en cada cambio de ruta */}
-        <GoogleAnalyticsPageTracker />
+        <Suspense fallback={null}>
+          <GoogleAnalyticsPageTracker />
+        </Suspense>
         <WelcomeSplash />
         {children}
       </body>

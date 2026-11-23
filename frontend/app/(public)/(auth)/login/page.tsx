@@ -46,13 +46,13 @@ function LoginForm() {
   };
 
   return (
-    <motion.form
+    <motion.div
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      onSubmit={submit}
-      className="glass rounded-2xl p-8 w-full max-w-md relative z-10"
+      className="w-full max-w-md relative z-10"
     >
+    <form onSubmit={submit} className="glass rounded-2xl p-8 w-full">
       <h1 className="font-display text-3xl mb-1 text-gradient-gold">ScentiA</h1>
       <p className="text-scentia-muted text-sm mb-6">Inicia sesión</p>
 
@@ -99,7 +99,8 @@ function LoginForm() {
           Regístrate
         </a>
       </p>
-    </motion.form>
+    </form>
+    </motion.div>
   );
 }
 

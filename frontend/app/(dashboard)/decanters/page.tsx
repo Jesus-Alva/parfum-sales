@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Pencil, Plus, ToggleLeft, ToggleRight } from "lucide-react";
 import { api, imageUrl } from "@/lib/api";
 
@@ -44,7 +45,7 @@ export default function DecantersPage() {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {decanters.map((item) => <article key={item.id} className="glass flex gap-4 rounded-2xl p-4">
             <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-scentia-card">
-              {item.image_url || item.perfume_image_url ? <img src={imageUrl(item.image_url || item.perfume_image_url)} alt={`Decanter de ${item.perfume_name}`} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center font-display text-3xl text-scentia-gold/50">S</div>}
+              {item.image_url || item.perfume_image_url ? <Image src={imageUrl(item.image_url || item.perfume_image_url)} alt={`Decanter de ${item.perfume_name}`} width={96} height={96} unoptimized className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center font-display text-3xl text-scentia-gold/50">S</div>}
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-xs uppercase tracking-widest text-scentia-gold">{item.brand}</p>

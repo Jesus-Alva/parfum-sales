@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import Image from "next/image";
 import { Pencil, Plus, Tags, Trash2, X } from "lucide-react";
 import { api, imageUrl, uploadBrandLogo } from "@/lib/api";
 
@@ -129,7 +130,7 @@ export default function BrandsPage() {
             {brands.map((brand) => (
               <li key={brand.id} className="flex items-center gap-4 px-5 py-3">
                 <div className="flex h-12 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-scentia-border bg-scentia-bg p-1">
-                  {brand.logo_url ? <img src={imageUrl(brand.logo_url)} alt={`Logotipo de ${brand.name}`} className="max-h-full max-w-full object-contain" /> : <span className="font-display text-2xl text-scentia-gold/50">{brand.name.charAt(0)}</span>}
+                  {brand.logo_url ? <Image src={imageUrl(brand.logo_url)} alt={`Logotipo de ${brand.name}`} width={64} height={48} unoptimized className="max-h-full max-w-full object-contain" /> : <span className="font-display text-2xl text-scentia-gold/50">{brand.name.charAt(0)}</span>}
                 </div>
                 <span className="min-w-0 flex-1 font-medium">{brand.name}</span>
                 <button type="button" onClick={() => editBrand(brand)} className="rounded-lg border border-scentia-border p-2 text-scentia-muted hover:border-scentia-gold/50 hover:text-scentia-gold" aria-label={`Editar ${brand.name}`}><Pencil size={16} /></button>

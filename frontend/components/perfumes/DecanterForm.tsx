@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { api, imageUrl as resolveImageUrl, uploadImage } from "@/lib/api";
 
 type BasePerfume = {
@@ -109,7 +110,7 @@ export default function DecanterForm({ decanter }: { decanter?: any }) {
         <label htmlFor="decanter-image" className="mb-2 block text-sm">Imagen del decanter (opcional)</label>
         <p className="mb-3 text-xs text-scentia-muted">Esta imagen se mostrará al elegir la presentación decanter. Si no agregas una, se usarán las imágenes del perfume base.</p>
         {(imagePreviewUrl || decanterImageUrl || selectedPerfume?.image_url) && <div className="mb-3 flex items-center gap-3">
-          <img src={imagePreviewUrl || resolveImageUrl(decanterImageUrl || selectedPerfume?.image_url || "")} alt="Vista previa del decanter" className="h-24 w-24 rounded-lg border border-scentia-border object-cover" />
+          <Image src={imagePreviewUrl || resolveImageUrl(decanterImageUrl || selectedPerfume?.image_url || "")} alt="Vista previa del decanter" width={96} height={96} unoptimized className="h-24 w-24 rounded-lg border border-scentia-border object-cover" />
           <span className="text-xs text-scentia-muted">{imagePreviewUrl || decanterImageUrl ? "Imagen propia del decanter" : "Imagen de respaldo del perfume"}</span>
         </div>}
         <input key={imageFile?.name || "empty"} id="decanter-image" type="file" accept="image/*" className="block w-full text-sm text-scentia-muted file:mr-3 file:rounded-lg file:border-0 file:bg-scentia-gold/15 file:px-3 file:py-2 file:text-scentia-gold" onChange={(event) => setImageFile(event.target.files?.[0] || null)} />
