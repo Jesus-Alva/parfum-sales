@@ -35,3 +35,14 @@ class PerfumeReviewsOut(BaseModel):
     average_rating: float
     total_reviews: int
     my_review: PerfumeReviewOut | None = None
+
+
+class RandomPerfumeReviewOut(BaseModel):
+    id: int
+    perfume_id: int
+    perfume_name: str
+    brand: str
+    author_name: str
+    rating: int
+    comment: str
+    created_at: datetime

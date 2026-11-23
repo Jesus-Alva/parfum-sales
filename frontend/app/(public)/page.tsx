@@ -7,6 +7,8 @@ import Hero from "@/components/landing/Hero";
 import PerfumeShowcase from "@/components/landing/PerfumeShowcase";
 import Features from "@/components/landing/Features";
 import Testimonials from "@/components/landing/Testimonials";
+import AboutUs from "@/components/landing/AboutUs";
+import DeliveryProcess from "@/components/landing/DeliveryProcess";
 
 function ForbiddenBanner() {
   const params = useSearchParams();
@@ -30,6 +32,8 @@ export default function HomePage() {
       </Suspense>
       <Hero />
       <PerfumeShowcase />
+      <AboutUs />
+      <DeliveryProcess />
       <Features />
       <Testimonials />
     </main>

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import {
   motion,
   useMotionValue,
@@ -148,9 +149,14 @@ export default function Hero() {
           transition={{ duration: 1, delay: 0.2 }}
           className="font-display text-5xl sm:text-6xl md:text-7xl leading-tight mb-6 drop-shadow-[0_0_30px_rgba(212,175,55,0.4)]"
         >
-          <span className="text-gradient-gold">
-            Perfumes de alta gama y fragancias de diseñador
-          </span>
+          <Image
+            src="/images/brand/wordmark.png"
+            alt="ScentiA, perfumes de alta gama y fragancias de diseñador"
+            width={658}
+            height={154}
+            priority
+            className="mx-auto h-auto w-3/4 max-w-[465px]"
+          />
         </motion.h1>
 
         <motion.p

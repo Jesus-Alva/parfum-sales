@@ -9,9 +9,43 @@ from app.database import get_db
 from app.models.perfume import Perfume
 from app.models.perfume_review import PerfumeReview
 from app.models.user import User
-from app.schemas.perfume_review import PerfumeReviewCreate, PerfumeReviewOut, PerfumeReviewsOut
+from app.schemas.perfume_review import (
+    PerfumeReviewCreate,
+    PerfumeReviewOut,
+    PerfumeReviewsOut,
+    RandomPerfumeReviewOut,
+)
 
 router = APIRouter()
+
+
+@router.get("/reviews/random", response_model=list[RandomPerfumeReviewOut])
+def list_random_reviews(
+    limit: int = Query(default=3, ge=1, le=12),
+    db: Session = Depends(get_db),
+):
+    reviews = (
+        db.query(PerfumeReview)
+        .join(PerfumeReview.perfume)
+        .options(joinedload(PerfumeReview.user), joinedload(PerfumeReview.perfume))
+        .filter(Perfume.is_enabled.is_(True))
+        .order_by(func.random())
+        .limit(limit)
+        .all()
+    )
+    return [
+        {
+            "id": review.id,
+            "perfume_id": review.perfume_id,
+            "perfume_name": review.perfume.name,
+            "brand": review.perfume.brand,
+            "author_name": review.author_name,
+            "rating": review.rating,
+            "comment": review.comment,
+            "created_at": review.created_at,
+        }
+        for review in reviews
+    ]
 
 
 @router.get("/perfumes/{perfume_id}/reviews", response_model=PerfumeReviewsOut)

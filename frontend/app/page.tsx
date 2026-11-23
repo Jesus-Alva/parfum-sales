@@ -6,6 +6,8 @@ import Testimonials from "@/components/landing/Testimonials";
 import Footer from "@/components/landing/Footer";
 import Navbar from "@/components/shared/Navbar";
 import LandingAtmosphere from "@/components/landing/LandingAtmosphere";
+import AboutUs from "@/components/landing/AboutUs";
+import DeliveryProcess from "@/components/landing/DeliveryProcess";
 import {
   SITE_DESCRIPTION,
   SITE_LOGO_URL,
@@ -22,7 +24,7 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     locale: "es_MX",
     url: SITE_URL,
-    title: "Perfumes de alta gama y fragancias de diseñador | ScentiA",
+    title: "ScentiA | Perfumes de alta gama y fragancias de diseñador",
     description: SITE_DESCRIPTION,
     images: [
       {
@@ -66,13 +68,15 @@ export default function HomePage() {
           __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
         }}
       />
-      <main className="overflow-x-hidden">
+      <main className="public-site overflow-x-hidden">
         <Navbar />
         <Hero />
         <div className="landing-atmosphere">
           <LandingAtmosphere />
           <div className="relative z-10">
             <PerfumeShowcase />
+            <AboutUs />
+            <DeliveryProcess />
             <Features />
             <Testimonials />
             <Footer />

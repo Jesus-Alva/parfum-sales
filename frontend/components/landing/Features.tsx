@@ -1,18 +1,18 @@
 "use client";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Sparkles, Shield, Truck, Bell } from "lucide-react";
+import { Sparkles, Shield, MapPin, Bell } from "lucide-react";
 
 const features = [
   { icon: Sparkles, title: "Fragancias premium", desc: "Selección curada de las mejores casas." },
   { icon: Shield, title: "Compra segura", desc: "Registro cifrado y transparente." },
-  { icon: Truck, title: "Envío ágil", desc: "Confirmación en segundos por Telegram." },
+  { icon: MapPin, title: "Entrega en punto", desc: "Elige un punto establecido y consulta su horario." },
   { icon: Bell, title: "Notificación instantánea", desc: "Recibes el folio al momento." },
 ];
 
 export default function Features() {
   return (
-    <section className="py-24 px-6 bg-gradient-to-b from-transparent to-scentia-card/40">
+    <section id="features" className="scroll-mt-24 py-24 px-6 bg-gradient-to-b from-transparent to-scentia-card/40">
       <h2 className="font-display text-4xl text-center mb-16">
         ¿Por qué <Image src="/images/brand/wordmark.png" alt="ScentiA" width={658} height={154} className="inline-block h-8 w-[136px] align-middle" />?
       </h2>

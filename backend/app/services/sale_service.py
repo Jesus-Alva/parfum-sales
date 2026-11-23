@@ -1,6 +1,5 @@
 import random
 import string
-import unicodedata
 from datetime import datetime
 from sqlalchemy.orm import Session
 
@@ -10,7 +9,6 @@ from app.models.sale import SaleItem
 from app.models.address import Address
 from app.schemas.sale import SaleCreate
 from app.models.delivery_location import DeliveryLocation
-from app.config import settings
 
 
 def generate_folio() -> str:
@@ -38,27 +36,16 @@ def create_sale(db: Session, payload: SaleCreate, user_id: int | None = None) ->
     first_perfume = perfumes_by_id[first_item.perfume_id]
     total = sum(perfumes_by_id[item.perfume_id].discounted_price * item.quantity for item in payload.items)
 
-    def normalize(value: str) -> str:
-        plain = unicodedata.normalize("NFKD", value or "")
-        return "".join(c for c in plain if not unicodedata.combining(c)).strip().casefold()
-
-    local = bool(settings.BUSINESS_CITY) and normalize(payload.address.city) == normalize(settings.BUSINESS_CITY)
-    if local and settings.BUSINESS_STATE:
-        if not payload.address.state:
-            raise ValueError("Indica el estado para confirmar si la entrega es local")
-        local = normalize(payload.address.state) == normalize(settings.BUSINESS_STATE)
-    preferred_location = None
-    if local:
-        if not payload.preferred_delivery_location_id:
-            raise ValueError("Selecciona un punto de entrega disponible")
-        preferred_location = db.query(DeliveryLocation).filter(
-            DeliveryLocation.id == payload.preferred_delivery_location_id,
-            DeliveryLocation.is_active.is_(True),
-        ).first()
-        if not preferred_location:
-            raise ValueError("El punto de entrega ya no está disponible")
-        if not preferred_location.delivery_day or not preferred_location.delivery_start_time or not preferred_location.delivery_end_time:
-            raise ValueError("El punto de entrega aún no tiene un horario configurado")
+    if not payload.preferred_delivery_location_id:
+        raise ValueError("Selecciona un punto de entrega disponible. No se realizan envíos")
+    preferred_location = db.query(DeliveryLocation).filter(
+        DeliveryLocation.id == payload.preferred_delivery_location_id,
+        DeliveryLocation.is_active.is_(True),
+    ).first()
+    if not preferred_location:
+        raise ValueError("El punto de entrega ya no está disponible")
+    if not preferred_location.delivery_day or not preferred_location.delivery_start_time or not preferred_location.delivery_end_time:
+        raise ValueError("El punto de entrega aún no tiene un horario configurado")
 
     address = Address(**payload.address.model_dump())
     db.add(address)
@@ -75,8 +62,8 @@ def create_sale(db: Session, payload: SaleCreate, user_id: int | None = None) ->
         unit_price=first_perfume.discounted_price,
         total=total,
         status="pending_delivery",
-        delivery_type="local" if local else "shipping",
-        preferred_delivery_location_id=preferred_location.id if preferred_location else None,
+        delivery_type="local",
+        preferred_delivery_location_id=preferred_location.id,
     )
 
     db.add(sale)

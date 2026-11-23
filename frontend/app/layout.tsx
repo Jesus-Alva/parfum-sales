@@ -4,14 +4,15 @@ import { Suspense } from "react";
 import "./globals.css";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import GoogleAnalyticsPageTracker from "@/components/GoogleAnalyticsPageTracker";
+import PageTitle from "@/components/PageTitle";
 import WelcomeSplash from "@/components/shared/WelcomeSplash";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/seo";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Perfumes de alta gama y fragancias exclusivas | ScentiA",
-    template: "%s | ScentiA",
+    default: "ScentiA | Perfumes de alta gama y fragancias exclusivas",
+    template: "ScentiA | %s",
   },
   description: SITE_DESCRIPTION,
   robots: {
@@ -29,7 +30,7 @@ export const metadata: Metadata = {
     type: "website",
     siteName: SITE_NAME,
     locale: "es_MX",
-    title: "Perfumes de alta gama y fragancias exclusivas | ScentiA",
+    title: "ScentiA | Perfumes de alta gama y fragancias exclusivas",
     description: SITE_DESCRIPTION,
     images: [
       {
@@ -42,7 +43,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Perfumes de alta gama y fragancias exclusivas | ScentiA",
+    title: "ScentiA | Perfumes de alta gama y fragancias exclusivas",
     description: SITE_DESCRIPTION,
     images: ["/images/brand/logo-complete.png"],
   },
@@ -54,6 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-scentia-bg text-scentia-text antialiased">
         {/* Scripts al final del body para asegurar SSR */}
         <GoogleAnalytics />
+        <PageTitle />
         {/* Este componente debe enviar el page_view en cada cambio de ruta */}
         <Suspense fallback={null}>
           <GoogleAnalyticsPageTracker />

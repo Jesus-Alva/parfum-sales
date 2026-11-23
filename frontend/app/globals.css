@@ -28,6 +28,20 @@ p {
   font-family: var(--font-jost);
 }
 
+/* Raise muted copy contrast across public pages without changing dashboard colors. */
+.public-site :is(
+  .text-scentia-muted,
+  [class~="text-scentia-text/80"],
+  [class~="text-scentia-text/90"]
+) {
+  color: #fff !important;
+}
+
+.public-site :is(input, textarea)::placeholder {
+  color: rgba(255, 255, 255, 0.82);
+  opacity: 1;
+}
+
 ::selection {
   background: #d4af37;
   color: #0a0a0f;

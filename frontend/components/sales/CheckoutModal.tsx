@@ -1,11 +1,10 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { api } from "@/lib/api";
 import { getToken } from "@/lib/auth";
-import InteractiveMap from "@/components/shared/InteractiveMap";
 import DeliveryLocationsMap from "@/components/shared/DeliveryLocationsMap";
 import type { CartItem } from "@/store/cartStore";
 
@@ -32,13 +31,11 @@ export default function CheckoutModal({
       postal_code: "",
       country: "México",
       references: "",
-      latitude: BUSINESS_MAP_CENTER.latitude as number | null,
-      longitude: BUSINESS_MAP_CENTER.longitude as number | null,
+      latitude: null as number | null,
+      longitude: null as number | null,
     },
   });
   const [locations, setLocations] = useState<any[]>([]);
-  const [businessAddress, setBusinessAddress] = useState({ city: "", state: "" });
-  const businessCoordinates = BUSINESS_MAP_CENTER;
   const [preferredLocationId, setPreferredLocationId] = useState("");
   const [addressSaved, setAddressSaved] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -62,33 +59,14 @@ export default function CheckoutModal({
         })
         .catch(() => undefined);
     }
-    Promise.all([api.get("/delivery-locations/"), api.get("/delivery-locations/settings")])
-      .then(([locationResponse, settingsResponse]) => {
+    api.get("/delivery-locations/")
+      .then((locationResponse) => {
         if (cancelled) return;
         setLocations(locationResponse.data);
-        const city = settingsResponse.data.business_city || "";
-        const state = settingsResponse.data.business_state || "";
-        setBusinessAddress({ city, state });
-        setForm((prev) => ({
-          ...prev,
-          address: {
-            ...prev.address,
-            city: prev.address.city || city,
-            state: prev.address.state || state,
-          },
-        }));
       })
       .catch(() => { if (!cancelled) setLocations([]); });
     return () => { cancelled = true; };
   }, []);
-
-  const normalized = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLocaleLowerCase();
-  const isLocal = useMemo(
-    () => Boolean(businessAddress.city)
-      && normalized(form.address.city) === normalized(businessAddress.city)
-      && (!businessAddress.state || normalized(form.address.state) === normalized(businessAddress.state)),
-    [businessAddress.city, businessAddress.state, form.address.city, form.address.state],
-  );
 
   const updateAddress = (k: string, v: string) =>
     setForm({ ...form, address: { ...form.address, [k]: v } });
@@ -107,7 +85,7 @@ export default function CheckoutModal({
         buyer_name: form.buyer_name,
         buyer_phone: form.buyer_phone,
         address: form.address,
-        preferred_delivery_location_id: isLocal ? Number(preferredLocationId) : null,
+        preferred_delivery_location_id: Number(preferredLocationId),
       });
       setSuccess(data);
     } catch (e: any) {
@@ -231,11 +209,11 @@ export default function CheckoutModal({
                       <p className="mt-1 text-xs text-scentia-muted">
                         {form.address.street} {form.address.number}, {form.address.city}, {form.address.state} {form.address.postal_code}
                       </p>
-                      <p className="mt-2 text-xs text-scentia-muted">Usaremos esta dirección para considerar envíos por paquetería en futuros pedidos.</p>
+                      <p className="mt-2 text-xs text-scentia-muted">La entrega de este pedido se realizará en el punto que selecciones; no hacemos envíos a domicilio ni por paquetería.</p>
                     </div>
                   ) : <>
                   <p className="mb-3 text-xs leading-relaxed text-scentia-muted">
-                    Solicitamos esta dirección para tener tus datos disponibles y considerar un envío por paquetería en el futuro.
+                    Guardamos estos datos como referencia de contacto. La entrega se realiza en un punto establecido que debes seleccionar; no hacemos envíos a domicilio ni por paquetería.
                   </p>
                   <div className="grid grid-cols-2 gap-3">
                     <input
@@ -269,7 +247,7 @@ export default function CheckoutModal({
                       placeholder="Estado"
                       value={form.address.state}
                       onChange={(e) => updateAddress("state", e.target.value)}
-                      required={Boolean(businessAddress.state)}
+                      required
                     />
                     <input
                       className={`${input} col-span-2`}
@@ -278,36 +256,24 @@ export default function CheckoutModal({
                       onChange={(e) => updateAddress("references", e.target.value)}
                     />
                   </div>
-                  {!isLocal && <div className="mt-3 space-y-2">
-                    <p className="text-xs text-scentia-muted">Para envíos por paquetería, puedes señalar el domicilio en el mapa.</p>
-                    <InteractiveMap
-                      latitude={form.address.latitude}
-                      longitude={form.address.longitude}
-                      initialCenter={businessCoordinates || undefined}
-                      label="Dirección del comprador"
-                      onChange={(latitude, longitude) => setForm((prev) => ({ ...prev, address: { ...prev.address, latitude, longitude } }))}
-                    />
-                  </div>}
                   </>}
                 </div>
 
-                {isLocal && (
-                  <div className="border-t border-scentia-border pt-3">
-                    <p className="text-xs uppercase tracking-widest text-scentia-gold mb-1">Entrega dentro de {businessAddress.city}</p>
-                    <p className="text-xs text-scentia-muted mb-3">Elige el punto que prefieres. Cada lugar tiene un día y rango horario habitual de entrega.</p>
-                    {locations.length === 0 ? <p className="rounded-lg border border-amber-400/20 bg-amber-400/5 p-3 text-xs text-amber-100">Aún no hay puntos de entrega disponibles. Contáctanos para coordinar tu pedido.</p> : <div className="space-y-3">
-                      <DeliveryLocationsMap locations={locations} selectedLocationId={preferredLocationId} initialCenter={businessCoordinates || BUSINESS_MAP_CENTER} onSelect={setPreferredLocationId} />
+                <div className="border-t border-scentia-border pt-3">
+                    <p className="text-xs uppercase tracking-widest text-scentia-gold mb-1">Punto de entrega</p>
+                    <p className="text-xs text-scentia-muted mb-3">Selecciona un punto disponible en Tecámac y alrededores. Cada lugar muestra su día y rango horario habitual.</p>
+                    {locations.length === 0 ? <p className="rounded-lg border border-amber-400/20 bg-amber-400/5 p-3 text-xs text-amber-100">Aún no hay puntos de entrega disponibles, por lo que no es posible registrar el pedido en este momento.</p> : <div className="space-y-3">
+                      <DeliveryLocationsMap locations={locations} selectedLocationId={preferredLocationId} initialCenter={BUSINESS_MAP_CENTER} onSelect={setPreferredLocationId} />
                       {locations.map((location) => (
                       <label key={location.id} className={`block cursor-pointer rounded-xl border p-3 transition ${preferredLocationId === String(location.id) ? "border-scentia-gold/60 bg-scentia-gold/5" : "border-scentia-border"}`}>
                         <span className="flex items-start gap-2"><input type="radio" name="delivery-location" value={location.id} checked={preferredLocationId === String(location.id)} onChange={() => setPreferredLocationId(String(location.id))} className="mt-1 accent-[#d4af37]" /><span><strong className="text-sm">{location.name}</strong><span className="block text-xs text-scentia-muted">{location.address}, {location.city}</span><span className="mt-1 block text-xs text-scentia-gold">{location.delivery_day ? `Entrega los ${DELIVERY_DAY_LABELS[location.delivery_day] || location.delivery_day}, ${location.delivery_start_time?.slice(0, 5)}–${location.delivery_end_time?.slice(0, 5)}` : "Horario pendiente de confirmar"}</span>{location.notes && <span className="mt-1 block text-xs text-scentia-muted">{location.notes}</span>}</span></span>
                       </label>
                     ))}</div>}
-                  </div>
-                )}
+                </div>
               </div>
 
               <button
-                disabled={loading || (isLocal && (!preferredLocationId || locations.length === 0))}
+                disabled={loading || !preferredLocationId || locations.length === 0}
                 className="w-full mt-5 bg-gradient-to-r from-scentia-gold to-scentia-gold-soft text-black font-semibold py-2.5 rounded-lg hover:opacity-90 transition disabled:opacity-50"
               >
                 {loading ? "Registrando..." : `Realizar pedido · $${total.toFixed(2)}`}
