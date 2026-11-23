@@ -1,19 +1,20 @@
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.core.security import decode_token
 from app.models.user import User
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
-optional_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
+bearer_scheme = HTTPBearer()
+optional_bearer_scheme = HTTPBearer(auto_error=False)
 
 
 def get_current_user(
-    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    db: Session = Depends(get_db),
 ) -> User:
-    email = decode_token(token)
+    email = decode_token(credentials.credentials)
     if not email:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido")
     user = db.query(User).filter(User.email == email).first()
@@ -23,11 +24,12 @@ def get_current_user(
 
 
 def get_optional_user(
-    token: str | None = Depends(optional_oauth2_scheme), db: Session = Depends(get_db)
+    credentials: HTTPAuthorizationCredentials | None = Depends(optional_bearer_scheme),
+    db: Session = Depends(get_db),
 ) -> User | None:
-    if not token:
+    if not credentials:
         return None
-    email = decode_token(token)
+    email = decode_token(credentials.credentials)
     if not email:
         return None
     user = db.query(User).filter(User.email == email).first()
